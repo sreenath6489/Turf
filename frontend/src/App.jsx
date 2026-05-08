@@ -1,0 +1,58 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Signup from './components/Signup';
+import Home from './components/Home';
+import CreateMatch from './components/CreateMatch';
+import Toss from './components/Toss';
+import MatchDashboard from './components/MatchDashboard.jsx';
+import SetupPlayers from './components/SetupPlayers';
+
+
+// KEEP THIS OUTSIDE THE APP FUNCTION
+const ProtectedRoute = ({ children }) => {
+  const user = localStorage.getItem('user');
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+};
+
+// THE MAIN FUNCTION
+export default function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-slate-950 text-white">
+        <Routes>
+          {/* Public Route */}
+          <Route path="/" element={<Signup />} />
+
+          {/* Private Routes */}
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/create-match"
+            element={
+              <ProtectedRoute>
+                <CreateMatch />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/toss" element={<ProtectedRoute><Toss /></ProtectedRoute>} />
+          <Route path="/setup-players" element={<ProtectedRoute><SetupPlayers /></ProtectedRoute>} />
+          <Route path="/scoreboard/:id" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
+          <Route path="/scoreboard" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}

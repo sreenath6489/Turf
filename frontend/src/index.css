@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+body {
+  @apply bg-[#FAF4EA] text-slate-900 font-sans;
+}
