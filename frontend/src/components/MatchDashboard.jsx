@@ -752,7 +752,17 @@ const MatchDashboard = () => {
                 )}
 
                 {/* Content to be screenshot */}
-                <div ref={scorecardRef} className="max-w-4xl mx-auto bg-stone-50 p-2 rounded-3xl">
+                <div ref={scorecardRef} className="max-w-4xl mx-auto bg-stone-50 p-2 rounded-3xl relative">
+                    
+                    {/* BACK BUTTON */}
+                    <button 
+                        onClick={() => navigate('/home')} 
+                        className="absolute top-6 left-6 z-50 p-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-2xl transition-all no-print"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
 
                     {/* Header Widget */}
                     <div className="bg-[#2e1065] rounded-[2.5rem] p-8 shadow-2xl text-white mb-6 relative overflow-hidden">

@@ -88,9 +88,9 @@ const Home = () => {
                     <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-700 rounded-full flex items-center justify-center text-xl font-bold shadow-lg shadow-red-500/20 text-white">
                         {user.name[0]}
                     </div>
-                    <div>
-                        <h1 className="text-xl font-black tracking-tight leading-none uppercase italic">{user.name}</h1>
-                        <p className="text-[10px] text-red-600 font-mono mt-1 tracking-[0.2em] uppercase opacity-70">ID: {user.tid}</p>
+                    <div onClick={() => navigate(`/player-stats/${user.tid}`)} className="cursor-pointer group">
+                        <h1 className="text-xl font-black tracking-tight leading-none uppercase italic group-hover:text-red-600 transition-colors">{user.name}</h1>
+                        <p className="text-[10px] text-red-600 font-mono mt-1 tracking-[0.2em] uppercase opacity-70">View Your Stats ➔</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md p-1 rounded-2xl border border-red-900/10 no-print">

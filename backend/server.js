@@ -199,5 +199,84 @@ app.get('/api/matches/:id', async (req, res) => {
     }
 });
 
+// GET PLAYER STATS AGGREGATED
+app.get('/api/players/stats/:tid', async (req, res) => {
+    try {
+        const { tid } = req.params;
+        const matches = await Match.find({
+            isCompleted: true,
+            $or: [
+                { "batsmanStats.tid": tid },
+                { "bowlerStats.tid": tid },
+                { "firstInningsData.batsmanStats.tid": tid },
+                { "firstInningsData.bowlerStats.tid": tid }
+            ]
+        });
+
+        let stats = {
+            batting: { totalRuns: 0, totalBalls: 0, fours: 0, sixes: 0, innings: 0, highest: 0 },
+            bowling: { totalWickets: 0, totalRuns: 0, totalBalls: 0, maidens: 0, innings: 0 },
+            recentForm: []
+        };
+
+        matches.forEach(m => {
+            const dateObj = m._id.getTimestamp();
+            const dateStr = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+            let matchEntry = { date: dateStr, runs: 0, wickets: 0 };
+            
+            // Batting (Check both innings)
+            const bat1 = m.firstInningsData?.batsmanStats?.find(b => b.tid === tid);
+            const bat2 = m.batsmanStats?.find(b => b.tid === tid);
+            
+            if (bat1) {
+                stats.batting.totalRuns += bat1.runs;
+                stats.batting.totalBalls += bat1.balls;
+                stats.batting.fours += bat1.fours;
+                stats.batting.sixes += bat1.sixes;
+                stats.batting.innings += 1;
+                stats.batting.highest = Math.max(stats.batting.highest, bat1.runs);
+                matchEntry.runs += bat1.runs;
+            }
+            if (bat2) {
+                stats.batting.totalRuns += bat2.runs;
+                stats.batting.totalBalls += bat2.balls;
+                stats.batting.fours += bat2.fours;
+                stats.batting.sixes += bat2.sixes;
+                stats.batting.innings += 1;
+                stats.batting.highest = Math.max(stats.batting.highest, bat2.runs);
+                matchEntry.runs += bat2.runs;
+            }
+
+            // Bowling (Check both innings)
+            const bowl1 = m.firstInningsData?.bowlerStats?.find(b => b.tid === tid);
+            const bowl2 = m.bowlerStats?.find(b => b.tid === tid);
+
+            if (bowl1) {
+                stats.bowling.totalWickets += bowl1.wickets;
+                stats.bowling.totalRuns += bowl1.runs;
+                stats.bowling.totalBalls += bowl1.balls;
+                stats.bowling.innings += 1;
+                matchEntry.wickets += bowl1.wickets;
+            }
+            if (bowl2) {
+                stats.bowling.totalWickets += bowl2.wickets;
+                stats.bowling.totalRuns += bowl2.runs;
+                stats.bowling.totalBalls += bowl2.balls;
+                stats.bowling.innings += 1;
+                matchEntry.wickets += bowl2.wickets;
+            }
+
+            if (bat1 || bat2 || bowl1 || bowl2) {
+                stats.recentForm.push(matchEntry);
+            }
+        });
+
+        res.json(stats);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to aggregate stats" });
+    }
+});
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

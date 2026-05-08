@@ -32,8 +32,17 @@ const CreateMatch = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4">
-            <h2 className="text-2xl font-bold text-red-600 mb-6">Setup Match</h2>
+        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 relative">
+            {/* BACK BUTTON */}
+            <button onClick={() => navigate('/home')} className="absolute top-4 left-4 p-3 bg-white/50 border border-red-900/10 rounded-2xl hover:bg-white transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+            <div className="mt-12 text-center mb-8">
+                <h2 className="text-3xl font-black italic text-red-600 uppercase">Setup Match</h2>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Assemble your Teams</p>
+            </div>
 
             {/* Team Inputs */}
             <div className="grid grid-cols-2 gap-4 mb-8">

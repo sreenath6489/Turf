@@ -6,6 +6,7 @@ import CreateMatch from './components/CreateMatch';
 import Toss from './components/Toss';
 import MatchDashboard from './components/MatchDashboard.jsx';
 import SetupPlayers from './components/SetupPlayers';
+import PlayerStats from './components/PlayerStats';
 
 
 // KEEP THIS OUTSIDE THE APP FUNCTION
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/setup-players" element={<ProtectedRoute><SetupPlayers /></ProtectedRoute>} />
           <Route path="/scoreboard/:id" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
           <Route path="/scoreboard" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
+          <Route path="/player-stats/:tid" element={<ProtectedRoute><PlayerStats /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

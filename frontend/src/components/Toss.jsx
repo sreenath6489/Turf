@@ -1,9 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Toss = () => {
-    const { state } = useLocation(); // teamA, teamB
+    const { state: navState } = useLocation();
     const navigate = useNavigate();
+    
+    // PERSISTENCE LOGIC
+    const [state, setState] = useState(navState || JSON.parse(localStorage.getItem('tempMatchState')));
+
+    useEffect(() => {
+        if (navState) {
+            localStorage.setItem('tempMatchState', JSON.stringify(navState));
+            setState(navState);
+        } else if (!state) {
+            navigate('/home'); // Can't recover anything, go home
+        }
+    }, [navState, state, navigate]);
+
     const [isSpinning, setIsSpinning] = useState(false);
     const [side, setSide] = useState('H'); // H or T
     const [tossWinner, setTossWinner] = useState(null);
@@ -28,7 +41,13 @@ const Toss = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] flex flex-col items-center p-8 text-slate-900">
+        <div className="min-h-screen bg-[#FAF4EA] flex flex-col items-center p-8 text-slate-900 relative">
+            {/* BACK BUTTON */}
+            <button onClick={() => navigate('/home')} className="absolute top-6 left-6 p-3 bg-white/50 border border-red-900/10 rounded-2xl hover:bg-white transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
             <h2 className="text-3xl font-black italic text-red-600 mb-12">THE TOSS</h2>
 
             {/* 3D Flip Animation */}

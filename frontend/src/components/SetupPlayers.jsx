@@ -1,15 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const SetupPlayers = () => {
-    const { state } = useLocation(); // battingTeam, bowlingTeam, totalOvers, etc.
+    const { state: navState } = useLocation(); // battingTeam, bowlingTeam, totalOvers, etc.
     const navigate = useNavigate();
+
+    // PERSISTENCE LOGIC
+    const [state, setState] = useState(navState || JSON.parse(localStorage.getItem('tempSetupState')));
+
+    useEffect(() => {
+        if (navState) {
+            localStorage.setItem('tempSetupState', JSON.stringify(navState));
+            setState(navState);
+        } else if (!state) {
+            navigate('/home');
+        }
+    }, [navState, state, navigate]);
 
     const [striker, setStriker] = useState(null);
     const [nonStriker, setNonStriker] = useState(null);
     const [bowler, setBowler] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    if (!state) return null;
 
     const handleStartMatch = async () => {
         if (!striker || !nonStriker || !bowler) {
@@ -56,7 +70,13 @@ const SetupPlayers = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans">
+        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans relative">
+            {/* BACK BUTTON */}
+            <button onClick={() => navigate('/home')} className="absolute top-6 left-6 p-3 bg-white/50 border border-red-900/10 rounded-2xl hover:bg-white transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
             <h2 className="text-xs font-black tracking-[0.4em] text-red-600 uppercase mb-8 text-center">Match Initialization</h2>
 
             <div className="space-y-8">
