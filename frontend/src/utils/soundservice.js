@@ -1,25 +1,32 @@
 const SOUND_MAP = {
-    four: ['/sounds/four.mp3'],
+    four: ['/sounds/four.mp3', '/sounds/four1.mp3'],
     six: ['/sounds/six_1.mp3', '/sounds/six_2.mp3'],
-    wide: ['/sounds/wide.mp3'],
-    noball: ['/sounds/noball.mp3'],
-    wicket: ['/sounds/wicket.mp3']
+    wide: ['/sounds/wide.mp3', '/sounds/wide1.mp3'],
+    noball: ['/sounds/noball.mp3', '/sounds/nob.mp3'],
+    wicket: ['/sounds/wicket.mp3', '/sounds/wicket1.mp3']
 };
 
-let sixCounter = 0;
+const COUNTERS = {
+    four: 0,
+    six: 0,
+    wide: 0,
+    noball: 0,
+    wicket: 0
+};
 
 export const playEventSound = (type) => {
     const mode = localStorage.getItem('commentaryMode') || 'AI';
     if (mode !== 'DIAL') return;
 
-    let soundPath = '';
-    
-    if (type === 'six') {
-        soundPath = SOUND_MAP.six[sixCounter % SOUND_MAP.six.length];
-        sixCounter++;
-    } else if (SOUND_MAP[type]) {
-        soundPath = SOUND_MAP[type][0];
-    }
+    if (!SOUND_MAP[type]) return;
+
+    // Get the current list and counter for this sound type
+    const sounds = SOUND_MAP[type];
+    const currentCounter = COUNTERS[type];
+
+    // Pick the sound and increment the counter
+    const soundPath = sounds[currentCounter % sounds.length];
+    COUNTERS[type]++;
 
     if (soundPath) {
         const audio = new Audio(soundPath);
@@ -32,14 +39,11 @@ export const speakCommentary = (text) => {
     if (mode !== 'AI') return;
 
     if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
         window.speechSynthesis.cancel();
-
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.1; // Slightly faster for excitement
+        utterance.rate = 1.1;
         utterance.pitch = 1.0;
         
-        // Try to find a male/energetic voice if possible
         const voices = window.speechSynthesis.getVoices();
         const preferredVoice = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Male'));
         if (preferredVoice) utterance.voice = preferredVoice;
