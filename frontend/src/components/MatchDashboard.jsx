@@ -1182,7 +1182,6 @@ const MatchDashboard = () => {
                             </button>
                         ))}
                     </div>
-                   </div>
 
                     {/* Tab Content */}
                     {activeTab === 'LIVE' && (
@@ -1707,7 +1706,8 @@ const MatchDashboard = () => {
                     </div>
                 )}
             </div>
-        );
+        </div>
+    );
     };
 
     return (
