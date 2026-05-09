@@ -10,7 +10,8 @@ const { generateCommentary } = require('./utils/aiEngine');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB Connected Successfully"))
@@ -68,10 +69,10 @@ app.get('/', (req, res) => res.send("Turf API Running"));
 // Player Signup
 app.post('/api/signup', async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, profilePic, role } = req.body;
         const count = await Player.countDocuments({ name: new RegExp(`^${name}$`, 'i') });
         const tid = `${name}${count + 1}`;
-        const newPlayer = new Player({ name, tid });
+        const newPlayer = new Player({ name, tid, profilePic, role });
         await newPlayer.save();
         res.status(201).json({ success: true, player: newPlayer });
     } catch (error) {
@@ -275,6 +276,22 @@ app.get('/api/players/stats/:tid', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to aggregate stats" });
+    }
+});
+
+const { getLiveIPLScore } = require('./services/iplService');
+
+// GET LIVE IPL SCORE
+app.get('/api/ipl/live', async (req, res) => {
+    try {
+        const data = await getLiveIPLScore();
+        if (data) {
+            res.json(data);
+        } else {
+            res.status(404).json({ message: "No live IPL match found" });
+        }
+    } catch (err) {
+        res.status(500).json({ message: "Failed to fetch IPL score" });
     }
 });
 

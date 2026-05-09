@@ -18,17 +18,28 @@ const Toss = () => {
     }, [navState, state, navigate]);
 
     const [isSpinning, setIsSpinning] = useState(false);
+    const [rotation, setRotation] = useState(0);
     const [side, setSide] = useState('H'); // H or T
     const [tossWinner, setTossWinner] = useState(null);
     const [decision, setDecision] = useState(null);
     const [overs, setOvers] = useState(5);
 
     const flipCoin = () => {
+        if (isSpinning) return;
+        
         setIsSpinning(true);
+        const result = Math.random() > 0.5 ? 'H' : 'T';
+        
+        // Randomly spin between 5 and 10 full rotations + target side
+        const extraDegrees = result === 'H' ? 0 : 180;
+        const newRotation = rotation + (Math.floor(Math.random() * 5) + 5) * 360 + extraDegrees;
+        
+        setRotation(newRotation);
+
         setTimeout(() => {
-            setSide(Math.random() > 0.5 ? 'H' : 'T');
+            setSide(result);
             setIsSpinning(false);
-        }, 2000);
+        }, 1500);
     };
 
     const startMatch = () => {
@@ -51,10 +62,10 @@ const Toss = () => {
             <h2 className="text-3xl font-black italic text-red-600 mb-12">THE TOSS</h2>
 
             {/* 3D Flip Animation */}
-            <div className={`w-32 h-32 relative preserve-3d transition-all duration-1000 ${isSpinning ? 'animate-bounce' : ''}`}
-                style={{ transform: side === 'T' ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+            <div className={`w-32 h-32 relative preserve-3d transition-all duration-[1500ms] cubic-bezier(0.4, 0, 0.2, 1) ${isSpinning ? 'scale-110' : ''}`}
+                style={{ transform: `rotateY(${rotation}deg)` }}>
                 <div className="absolute w-full h-full backface-hidden rounded-full border-4 border-yellow-500 bg-yellow-600 flex items-center justify-center text-5xl font-black text-yellow-200 shadow-2xl shadow-yellow-500/20">H</div>
-                <div className="absolute w-full h-full backface-hidden rounded-full border-4 border-yellow-500 bg-yellow-700 flex items-center justify-center text-5xl font-black text-yellow-100 rotate-y-180">T</div>
+                <div className="absolute w-full h-full backface-hidden rounded-full border-4 border-yellow-500 bg-yellow-700 flex items-center justify-center text-5xl font-black text-yellow-100 [transform:rotateY(180deg)]">T</div>
             </div>
 
             <button onClick={flipCoin} className="mt-8 bg-white text-black px-8 py-3 rounded-xl font-black italic">FLIP</button>

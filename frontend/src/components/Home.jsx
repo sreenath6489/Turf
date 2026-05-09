@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { fetchIPLMatches } from '../utils/iplservice.js';
+import IPLCard from './IPLCard';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
@@ -116,6 +117,9 @@ const Home = () => {
                     </svg>
                 </button>
             </div>
+
+            {/* LIVE IPL SCORECARD (GLASSMORPHISM) */}
+            <IPLCard />
 
             {/* Main Action Card */}
             <div

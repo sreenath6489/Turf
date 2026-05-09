@@ -3,11 +3,12 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const CreateMatch = () => {
-    const [teamA, setTeamA] = useState({ name: '', players: [] });
-    const [teamB, setTeamB] = useState({ name: '', players: [] });
+    const [teamA, setTeamA] = useState({ name: '', players: [], captain: null });
+    const [teamB, setTeamB] = useState({ name: '', players: [], captain: null });
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
-    const [activeTeam, setActiveTeam] = useState('A'); // Which team are we adding to?
+    const [activeTeam, setActiveTeam] = useState('A'); 
+    const [step, setStep] = useState(1); // 1: Setup, 2: Select Captains
 
     const navigate = useNavigate();
 
@@ -80,9 +81,13 @@ const CreateMatch = () => {
                             <div
                                 key={p.tid}
                                 onClick={() => addPlayer(p)}
-                                className="p-3 hover:bg-red-50 hover:text-red-600 cursor-pointer border-b border-red-900/5 last:border-0 text-slate-900"
+                                className="p-3 hover:bg-red-50 hover:text-red-600 cursor-pointer border-b border-red-900/5 last:border-0 text-slate-900 flex items-center gap-3"
                             >
-                                {p.name} <span className="text-xs opacity-60">({p.tid})</span>
+                                <img src={p.profilePic} alt="" className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                                <div>
+                                    <p className="font-bold">{p.name}</p>
+                                    <p className="text-[8px] opacity-60 uppercase">{p.role} • {p.tid}</p>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -90,24 +95,73 @@ const CreateMatch = () => {
             </div>
 
             {/* Current Rosters */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white border border-red-900/10 p-3 rounded-lg shadow-sm">
-                    <h3 className="font-bold border-b border-red-900/10 mb-2 text-red-600">{teamA.name || 'Team A'}</h3>
-                    {teamA.players.map(p => <div key={p.tid} className="text-sm mb-1 text-slate-700">● {p.name}</div>)}
-                </div>
-                <div className="bg-white border border-red-900/10 p-3 rounded-lg shadow-sm">
-                    <h3 className="font-bold border-b border-red-900/10 mb-2 text-red-600">{teamB.name || 'Team B'}</h3>
-                    {teamB.players.map(p => <div key={p.tid} className="text-sm mb-1 text-slate-700">● {p.name}</div>)}
-                </div>
-            </div>
+            {step === 1 ? (
+                <>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white border border-red-900/10 p-3 rounded-lg shadow-sm">
+                            <h3 className="font-bold border-b border-red-900/10 mb-2 text-red-600">{teamA.name || 'Team A'}</h3>
+                            {teamA.players.map(p => <div key={p.tid} className="text-sm mb-1 text-slate-700">● {p.name}</div>)}
+                        </div>
+                        <div className="bg-white border border-red-900/10 p-3 rounded-lg shadow-sm">
+                            <h3 className="font-bold border-b border-red-900/10 mb-2 text-red-600">{teamB.name || 'Team B'}</h3>
+                            {teamB.players.map(p => <div key={p.tid} className="text-sm mb-1 text-slate-700">● {p.name}</div>)}
+                        </div>
+                    </div>
 
-            {teamA.players.length > 0 && teamB.players.length > 0 && (
-                <button
-                    onClick={() => navigate('/toss', { state: { teamA, teamB } })}
-                    className="w-full bg-red-600 text-white font-black py-4 rounded-xl mt-8 shadow-lg shadow-red-900/20 uppercase"
-                >
-                    CONTINUE TO TOSS 🪙
-                </button>
+                    {teamA.players.length > 0 && teamB.players.length > 0 && (
+                        <button
+                            onClick={() => setStep(2)}
+                            className="w-full bg-red-600 text-white font-black py-4 rounded-xl mt-8 shadow-lg shadow-red-900/20 uppercase"
+                        >
+                            Next: Select Captains ➔
+                        </button>
+                    )}
+                </>
+            ) : (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-white p-6 rounded-3xl border border-red-900/10 shadow-xl">
+                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-red-600 rounded-full"></span> Select {teamA.name} Captain
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {teamA.players.map(p => (
+                                <button 
+                                    key={p.tid} 
+                                    onClick={() => setTeamA({...teamA, captain: p})}
+                                    className={`p-3 rounded-xl border-2 transition-all font-bold text-sm ${teamA.captain?.tid === p.tid ? 'border-red-600 bg-red-50 text-red-600' : 'border-slate-100 text-slate-500'}`}
+                                >
+                                    {p.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl border border-red-900/10 shadow-xl">
+                        <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-blue-600 rounded-full"></span> Select {teamB.name} Captain
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {teamB.players.map(p => (
+                                <button 
+                                    key={p.tid} 
+                                    onClick={() => setTeamB({...teamB, captain: p})}
+                                    className={`p-3 rounded-xl border-2 transition-all font-bold text-sm ${teamB.captain?.tid === p.tid ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-100 text-slate-500'}`}
+                                >
+                                    {p.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {teamA.captain && teamB.captain && (
+                        <button
+                            onClick={() => navigate('/squads', { state: { teamA, teamB } })}
+                            className="w-full bg-[#1a1a1a] text-white font-black py-5 rounded-2xl mt-8 shadow-2xl uppercase tracking-widest hover:bg-red-600 transition-all"
+                        >
+                            View Squad Posters 📸
+                        </button>
+                    )}
+                </div>
             )}
         </div>
     );

@@ -5,16 +5,29 @@ import { useNavigate } from 'react-router-dom';
 const Signup = () => {
     const [isLogin, setIsLogin] = useState(false);
     const [name, setName] = useState('');
+    const [profilePic, setProfilePic] = useState('');
+    const [role, setRole] = useState('All-Rounder');
     const [identifier, setIdentifier] = useState('');
     const [generatedTid, setGeneratedTid] = useState(null);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfilePic(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleAction = async () => {
         setLoading(true);
         try {
             const endpoint = isLogin ? '/api/login' : '/api/signup';
-            const payload = isLogin ? { identifier } : { name };
+            const payload = isLogin ? { identifier } : { name, profilePic, role };
 
             const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${endpoint}`, payload);
 
@@ -84,6 +97,46 @@ const Signup = () => {
                                     onKeyPress={(e) => e.key === 'Enter' && handleAction()}
                                 />
                             </div>
+
+                            {!isLogin && (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                                            Upload Profile Photo
+                                        </label>
+                                        <div className="flex items-center gap-4">
+                                            {profilePic && (
+                                                <img src={profilePic} alt="Preview" className="w-12 h-12 rounded-full object-cover border-2 border-emerald-500" />
+                                            )}
+                                            <label className="flex-1 flex items-center justify-center p-5 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border-dashed">
+                                                <span className="text-xs font-bold text-slate-400">
+                                                    {profilePic ? "Change Photo" : "Select from Gallery"}
+                                                </span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleFileChange}
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                                            Player Role
+                                        </label>
+                                        <select 
+                                            className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none text-white transition-all font-bold appearance-none"
+                                            onChange={(e) => setRole(e.target.value)}
+                                        >
+                                            <option value="All-Rounder">All-Rounder</option>
+                                            <option value="Batsman">Batsman</option>
+                                            <option value="Bowler">Bowler</option>
+                                            <option value="Wicket-Keeper">Wicket-Keeper</option>
+                                        </select>
+                                    </div>
+                                </>
+                            )}
 
                             <button 
                                 onClick={handleAction} 
