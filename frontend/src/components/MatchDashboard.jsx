@@ -1033,6 +1033,24 @@ const MatchDashboard = () => {
                 {/* Content to be screenshot */}
                 <div ref={scorecardRef} className="max-w-4xl mx-auto bg-stone-50 p-2 rounded-3xl relative">
                     
+                    {/* TOP NAVIGATION TABS */}
+                    <div className="flex gap-2 p-2 bg-stone-100 rounded-3xl mb-6 no-print">
+                        <button 
+                            className="flex-1 py-3 bg-white shadow-sm rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-600"
+                        >
+                            Scoreboard
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const element = document.getElementById('crazy-questions-section');
+                                if (element) element.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="flex-1 py-3 hover:bg-white/50 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 flex items-center justify-center gap-2"
+                        >
+                            Crazy Questions {match.polls?.length > 0 && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>}
+                        </button>
+                    </div>
+
                     {/* BACK BUTTON */}
                     <button 
                         onClick={() => navigate('/home')} 
@@ -1478,7 +1496,137 @@ const MatchDashboard = () => {
                         </div>
                     </div>
                 )}
+                {/* CRAZY QUESTIONS SECTION */}
+                <div id="crazy-questions-section" className="mt-12 mb-20 px-2">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-2xl font-black italic uppercase tracking-tighter">Crazy <span className="text-red-600">Questions</span></h3>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Match Engagement Arena</p>
+                        </div>
+                        {isAdmin && (
+                            <button 
+                                onClick={() => setPollModal(true)}
+                                className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg"
+                            >
+                                <span>➕</span> Post Question
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="space-y-6">
+                        {!match.polls || match.polls.length === 0 ? (
+                            <div className="bg-white border border-dashed border-slate-200 p-12 rounded-[2.5rem] text-center">
+                                <span className="text-4xl mb-4 block opacity-30">🤔</span>
+                                <p className="text-slate-400 font-bold text-sm italic">No active questions. {isAdmin ? "Start one now!" : "Waiting for the admin..."}</p>
+                            </div>
+                        ) : (
+                            [...match.polls].reverse().map((poll, pIdx) => {
+                                const actualIdx = match.polls.length - 1 - pIdx;
+                                const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+                                
+                                return (
+                                    <div key={actualIdx} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-red-900/5 relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
+                                        <h4 className="text-xl font-black italic text-slate-900 mb-6 leading-tight">"{poll.question}"</h4>
+                                        
+                                        <div className="space-y-3">
+                                            {poll.options.map((opt, oIdx) => {
+                                                const percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                                                return (
+                                                    <button 
+                                                        key={oIdx}
+                                                        onClick={() => handleVote(actualIdx, oIdx)}
+                                                        className="w-full relative h-16 bg-stone-50 rounded-2xl border border-slate-100 overflow-hidden group hover:border-red-200 transition-all text-left"
+                                                    >
+                                                        <div 
+                                                            className="absolute inset-0 bg-red-600/5 transition-all duration-1000"
+                                                            style={{ width: `${percent}%` }}
+                                                        />
+                                                        <div className="absolute inset-0 px-5 flex items-center justify-between z-10">
+                                                            <span className="font-bold text-slate-700 uppercase italic text-xs">{opt.text}</span>
+                                                            <span className="font-black text-red-600 text-sm">{percent}%</span>
+                                                        </div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className="mt-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">{totalVotes} Fans Voted</p>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+
+                {/* POLL MODAL (ADMIN ONLY) */}
+                {pollModal && (
+                    <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/60 animate-in fade-in duration-300">
+                        <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-red-600"></div>
+                            <h3 className="text-3xl font-black italic uppercase text-slate-950 mb-8">Post A <span className="text-red-600">Question</span></h3>
+                            
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">The Question</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="e.g. Who will win this match?"
+                                        className="w-full p-5 bg-stone-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none text-slate-900 font-bold"
+                                        value={newPoll.question}
+                                        onChange={(e) => setNewPoll({...newPoll, question: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Options</label>
+                                    {newPoll.options.map((opt, i) => (
+                                        <input 
+                                            key={i}
+                                            type="text"
+                                            placeholder={`Option ${i+1}`}
+                                            className="w-full p-4 bg-stone-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none text-slate-900 font-bold text-sm"
+                                            value={opt}
+                                            onChange={(e) => {
+                                                const updated = [...newPoll.options];
+                                                updated[i] = e.target.value;
+                                                setNewPoll({...newPoll, options: updated});
+                                            }}
+                                        />
+                                    ))}
+                                    <button 
+                                        onClick={() => setNewPoll({...newPoll, options: [...newPoll.options, '']})}
+                                        className="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline"
+                                    >
+                                        + Add More Options
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-3 pt-6">
+                                    <button 
+                                        onClick={() => setPollModal(false)}
+                                        className="flex-1 py-4 bg-stone-100 text-slate-400 font-black rounded-2xl uppercase tracking-widest text-xs"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        onClick={handleCreatePoll}
+                                        className="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-xl shadow-red-600/30"
+                                    >
+                                        Publish 🚀
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
+        );
+    };
+
+    return (
+        <div className="font-sans">
+            {renderFullScorecard()}
+        </div>
     );
 };
 

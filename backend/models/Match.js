@@ -28,7 +28,12 @@ const matchSchema = new mongoose.Schema({
         byes: { type: Number, default: 0 }, 
         legByes: { type: Number, default: 0 } 
     },
-    firstInningsData: Object
+    firstInningsData: Object,
+    polls: [{
+        question: String,
+        options: [{ text: String, votes: { type: Number, default: 0 } }],
+        active: { type: Boolean, default: true }
+    }]
 });
 
 module.exports = mongoose.model('Match', matchSchema);
