@@ -950,8 +950,6 @@ const MatchDashboard = () => {
                         </table>
                     </div>
                 </div>
-            );
-        };
 
         return (
             <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 md:p-8 font-sans pb-40">
