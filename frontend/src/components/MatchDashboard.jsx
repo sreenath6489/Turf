@@ -24,15 +24,23 @@ const MatchDashboard = () => {
     const [selectedBowler, setSelectedBowler] = useState(null);
     const [viewInnings, setViewInnings] = useState(1); // For the toggle
     const [commentary, setCommentary] = useState("");
+    const [momentumPulse, setMomentumPulse] = useState(false);
     const [pollModal, setPollModal] = useState(false);
     const [transferModal, setTransferModal] = useState(false);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
     const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
 
     const handleTransfer = async (newAdminId) => {
         try {
             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/transfer`, { newAdminId });
             setTransferModal(false);
-        } catch (err) { alert("Transfer failed"); }
+            showToast("Control Transferred! 👑", "info");
+        } catch (err) { showToast("Transfer failed", "error"); }
     };
 
     const handleCreatePoll = async () => {
@@ -43,7 +51,8 @@ const MatchDashboard = () => {
             });
             setPollModal(false);
             setNewPoll({ question: '', options: ['', ''] });
-        } catch (err) { alert("Poll creation failed"); }
+            showToast("Question Published! 🚀");
+        } catch (err) { showToast("Poll creation failed", "error"); }
     };
 
     const handleVote = async (pollIndex, optionIndex) => {
@@ -51,8 +60,6 @@ const MatchDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll/${pollIndex}/vote`, { optionIndex });
         } catch (err) { console.error("Vote failed"); }
     };
-    const [momentumPulse, setMomentumPulse] = useState(false);
-
     // AI WIN PROBABILITY & MOMENTUM LOGIC
     const calculateStats = () => {
         if (!match) return { winProb: 50, momentum: 50 };
@@ -932,6 +939,22 @@ const MatchDashboard = () => {
 
         return (
             <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 md:p-8 font-sans pb-40">
+                {/* PREMIUM TOAST NOTIFICATION */}
+                {toast && (
+                    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[500] animate-in slide-in-from-top duration-300">
+                        <div className={`px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center gap-3 ${
+                            toast.type === 'error' ? 'bg-rose-500/90 border-rose-400 text-white' : 
+                            toast.type === 'info' ? 'bg-blue-500/90 border-blue-400 text-white' : 
+                            'bg-emerald-500/90 border-emerald-400 text-white'
+                        }`}>
+                            <span className="text-lg">
+                                {toast.type === 'error' ? '❌' : toast.type === 'info' ? 'ℹ️' : '✅'}
+                            </span>
+                            <span className="font-black italic uppercase tracking-tight text-sm">{toast.message}</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* SPECIAL FUNNY EVENTS OVERLAY */}
                 {specialEvent && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none overflow-hidden">
@@ -1148,6 +1171,7 @@ const MatchDashboard = () => {
                     {activeTab === 'SCORECARD' && renderFullScorecard()}
                     {activeTab === 'SQUADS' && renderSquads()}
                     {activeTab === 'CRAZY QUESTIONS' && renderCrazyQuestions()}
+                   </div>
 
                 {/* Pinned IPL Score */}
                 {renderPinnedScore()}

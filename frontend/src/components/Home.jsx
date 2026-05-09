@@ -191,15 +191,15 @@ const Home = () => {
                             <div
                                 key={match._id}
                                 onClick={() => navigate(`/scoreboard/${match._id}`)}
-                                className="bg-white border border-red-900/10 shadow-sm p-6 rounded-[2rem] hover:border-red-600/50 transition-all cursor-pointer"
+                                className="bg-white border border-red-900/10 shadow-sm p-6 rounded-[2rem] hover:border-red-600/50 transition-all cursor-pointer group"
                             >
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{match.overs} Overs Match</span>
-                                    <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded uppercase border border-red-200">Live</span>
+                                    <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded uppercase border border-red-200 animate-pulse">Live</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-lg font-black uppercase italic">{match.battingTeam.name}</p>
+                                        <p className="text-lg font-black uppercase italic group-hover:text-red-600 transition-colors">{match.battingTeam.name}</p>
                                         <p className="text-xs text-slate-500">vs {match.bowlingTeam.name}</p>
                                     </div>
                                     <div className="text-right">
@@ -210,8 +210,10 @@ const Home = () => {
                             </div>
                         ))
                     ) : (
-                        <div className="bg-stone-50 border border-red-900/10 p-10 rounded-[2rem] text-center border-dashed">
-                            <p className="text-slate-500 text-sm italic">No matches live right now.</p>
+                        <div className="bg-white/50 border-2 border-dashed border-red-900/10 p-12 rounded-[2.5rem] text-center">
+                            <span className="text-5xl mb-4 block animate-bounce">🏟️</span>
+                            <p className="text-slate-900 font-black italic uppercase tracking-tighter text-xl">The Pitch is Waiting!</p>
+                            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Host your first match to see it live here</p>
                         </div>
                     )}
                 </div>
