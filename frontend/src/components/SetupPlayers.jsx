@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const SetupPlayers = () => {
-    const { state: navState } = useLocation(); // battingTeam, bowlingTeam, totalOvers, etc.
+    const { state: navState } = useLocation();
     const navigate = useNavigate();
 
     // PERSISTENCE LOGIC
@@ -38,7 +39,6 @@ const SetupPlayers = () => {
         setLoading(true);
         try {
             const admin = JSON.parse(localStorage.getItem('user'));
-
             const matchData = {
                 teamA: state.teamA,
                 teamB: state.teamB,
@@ -59,7 +59,6 @@ const SetupPlayers = () => {
             const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/create`, matchData);
 
             if (res.data.success) {
-                // CLEAR TEMP STATES
                 localStorage.removeItem('tempMatchState');
                 localStorage.removeItem('tempSetupState');
                 navigate(`/scoreboard/${res.data.match._id}`, { state: res.data.match });
@@ -73,45 +72,97 @@ const SetupPlayers = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans relative">
+        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 md:p-10 font-sans relative overflow-hidden">
+            {/* PITCH TEXTURE BACKGROUND */}
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none select-none">
+                <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <rect x="45" y="0" width="10" height="100" fill="currentColor" />
+                    <circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" strokeWidth="0.5" />
+                </svg>
+            </div>
+
             {/* BACK BUTTON */}
-            <button onClick={() => navigate('/home')} className="absolute top-6 left-6 p-3 bg-white/50 border border-red-900/10 rounded-2xl hover:bg-white transition-all">
+            <button onClick={() => navigate('/home')} className="absolute top-8 left-8 p-4 bg-white border border-red-900/10 rounded-2xl hover:bg-red-50 transition-all shadow-xl z-20">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
             </button>
-            <h2 className="text-xs font-black tracking-[0.4em] text-red-600 uppercase mb-8 text-center">Match Initialization</h2>
 
-            <div className="space-y-8">
-                {/* Batting Team Selection */}
-                <section>
-                    <h3 className="text-lg font-bold italic mb-4 flex items-center gap-2">
-                        🏏 {state.battingTeam.name} <span className="text-[10px] text-slate-500 not-italic uppercase font-black">Batting</span>
-                    </h3>
-                    <div className="grid gap-3">
-                        <div>
-                            <p className="text-[10px] text-slate-500 uppercase mb-2 ml-1 font-bold">Select Striker</p>
-                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                {state.battingTeam.players.map(p => (
-                                    <button
-                                        key={p.tid}
-                                        onClick={() => setStriker(p)}
-                                        className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap border-2 transition-all ${striker?.tid === p.tid ? 'bg-red-600 border-red-600 text-white font-bold' : 'bg-white border-red-900/10 text-slate-600'}`}
-                                    >
-                                        {p.name}
-                                    </button>
-                                ))}
+            <div className="max-w-6xl mx-auto z-10 relative">
+                <div className="text-center mb-12">
+                    <h2 className="text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Match<br /><span className="text-red-600">Briefing</span></h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Final Strategic Setup</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
+                    {/* BATTING SQUAD SECTION */}
+                    <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-red-900/10 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 className="text-3xl font-black uppercase italic leading-none">{state.battingTeam.name}</h3>
+                                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">Batting First</p>
+                            </div>
+                            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19,2L14,7.29V13.71L19,18.71V2M5,2L10,7.29V13.71L5,18.71V2Z" /></svg>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Striker</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {state.battingTeam.players.map(p => (
+                                        <button 
+                                            key={p.tid} 
+                                            onClick={() => setStriker(p)}
+                                            className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${striker?.tid === p.tid ? 'border-red-600 bg-red-600 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-red-200'}`}
+                                        >
+                                            {p.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Non-Striker</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {state.battingTeam.players.map(p => (
+                                        <button 
+                                            key={p.tid} 
+                                            onClick={() => setNonStriker(p)}
+                                            disabled={striker?.tid === p.tid}
+                                            className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${nonStriker?.tid === p.tid ? 'border-slate-900 bg-slate-900 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-slate-200'} disabled:opacity-30`}
+                                        >
+                                            {p.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* BOWLING SQUAD SECTION */}
+                    <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-200 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-1.5 h-full bg-slate-400"></div>
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h3 className="text-3xl font-black uppercase italic leading-none">{state.bowlingTeam.name}</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Bowling First</p>
+                            </div>
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" /></svg>
                             </div>
                         </div>
 
                         <div>
-                            <p className="text-[10px] text-slate-500 uppercase mb-2 ml-1 font-bold">Select Non-Striker</p>
-                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                {state.battingTeam.players.map(p => (
-                                    <button
-                                        key={p.tid}
-                                        onClick={() => setNonStriker(p)}
-                                        className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap border-2 transition-all ${nonStriker?.tid === p.tid ? 'bg-red-600 border-red-600 text-white font-bold' : 'bg-white border-red-900/10 text-slate-600'}`}
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Opening Bowler</label>
+                            <div className="flex flex-wrap gap-2">
+                                {state.bowlingTeam.players.map(p => (
+                                    <button 
+                                        key={p.tid} 
+                                        onClick={() => setBowler(p)}
+                                        className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${bowler?.tid === p.tid ? 'border-slate-900 bg-slate-900 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-slate-200'}`}
                                     >
                                         {p.name}
                                     </button>
@@ -119,41 +170,23 @@ const SetupPlayers = () => {
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <hr className="border-red-900/10" />
-
-                {/* Bowling Team Selection */}
-                <section>
-                    <h3 className="text-lg font-bold italic mb-4 flex items-center gap-2">
-                        ⚾ {state.bowlingTeam.name} <span className="text-[10px] text-slate-500 not-italic uppercase font-black">Bowling</span>
-                    </h3>
-                    <div>
-                        <p className="text-[10px] text-slate-500 uppercase mb-2 ml-1 font-bold">Select Opening Bowler</p>
-                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                            {state.bowlingTeam.players.map(p => (
-                                <button
-                                    key={p.tid}
-                                    onClick={() => setBowler(p)}
-                                    className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap border-2 transition-all ${bowler?.tid === p.tid ? 'bg-red-600 border-red-600 text-white font-bold' : 'bg-white border-red-900/10 text-slate-600'}`}
-                                >
-                                    {p.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            {/* Sticky Start Button */}
-            <div className="fixed bottom-8 left-6 right-6">
-                <button
-                    onClick={handleStartMatch}
-                    disabled={loading}
-                    className={`w-full py-5 rounded-[2rem] font-black uppercase italic shadow-2xl transition-all ${loading ? 'bg-stone-200 text-stone-400 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700'}`}
-                >
-                    {loading ? 'Setting up pitch...' : 'Enter the Turf 🏟️'}
-                </button>
+                {/* FINAL START BUTTON */}
+                <div className="flex justify-center pb-20">
+                    <button 
+                        onClick={handleStartMatch} 
+                        disabled={!striker || !nonStriker || !bowler || loading}
+                        className="px-20 py-8 bg-red-600 text-white rounded-[2.5rem] font-black uppercase tracking-[0.3em] italic shadow-2xl shadow-red-600/30 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-30 disabled:grayscale relative overflow-hidden"
+                    >
+                        {loading ? "Initializing..." : "Start The Battle 🚀"}
+                        <motion.div 
+                            animate={{ x: ['-100%', '200%'] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                        />
+                    </button>
+                </div>
             </div>
         </div>
     );

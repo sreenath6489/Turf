@@ -50,35 +50,40 @@ const Signup = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#0B0E14] p-6 relative overflow-hidden">
-            {/* Animated Background Orbs */}
-            <div className="absolute top-0 -left-20 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px] animate-pulse"></div>
-            <div className="absolute bottom-0 -right-20 w-96 h-96 bg-yellow-600/10 rounded-full blur-[100px] animate-pulse delay-700"></div>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-[#FAF4EA] p-6 relative overflow-hidden">
+            {/* Animated Background Cricketing Elements */}
+            <div className="absolute top-10 -left-20 w-96 h-96 bg-red-600/5 rounded-full blur-[100px] animate-pulse"></div>
+            <div className="absolute bottom-10 -right-20 w-96 h-96 bg-slate-900/5 rounded-full blur-[100px] animate-pulse delay-700"></div>
+            
+            {/* STUMP SILHOUETTE */}
+            <div className="absolute top-1/2 left-10 -translate-y-1/2 opacity-[0.03] select-none pointer-events-none">
+                <svg width="200" height="400" viewBox="0 0 100 200" fill="currentColor"><rect x="20" y="20" width="8" height="160" /><rect x="46" y="20" width="8" height="160" /><rect x="72" y="20" width="8" height="160" /><rect x="15" y="10" width="70" height="5" /></svg>
+            </div>
 
             <div className="w-full max-w-md z-10">
                 <div className="text-center mb-10">
-                    <h1 className="text-6xl font-black text-white mb-2 tracking-tighter italic">
-                        TURF<span className="text-amber-500">PRO</span>
+                    <h1 className="text-6xl font-black text-slate-950 mb-2 tracking-tighter italic">
+                        TURF<span className="text-red-600">PRO</span>
                     </h1>
-                    <p className="text-slate-400 font-bold uppercase tracking-[0.4em] text-[10px]">The Master Edition</p>
+                    <p className="text-red-600 font-bold uppercase tracking-[0.4em] text-[10px]">The Master Class Edition</p>
                 </div>
 
-                <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[3rem] shadow-2xl">
+                <div className="bg-white border border-red-900/10 p-10 rounded-[3rem] shadow-2xl shadow-red-900/5">
                     {generatedTid ? (
                         <div className="text-center">
-                            <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
+                            <div className="w-20 h-20 bg-red-600/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                 </svg>
                             </div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Registration Successful!</p>
                             <p className="text-[10px] text-slate-500 mb-2">Save your Unique TID:</p>
-                            <h2 className="text-4xl font-black text-white tracking-widest bg-white/5 py-6 rounded-3xl border border-amber-500/30 mb-8 font-mono">
+                            <h2 className="text-4xl font-black text-slate-950 tracking-widest bg-stone-50 py-6 rounded-3xl border border-red-600/30 mb-8 font-mono">
                                 {generatedTid}
                             </h2>
                             <button 
                                 onClick={switchToLogin} 
-                                className="w-full py-5 bg-amber-500 text-slate-950 font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-amber-500/20"
+                                className="w-full py-5 bg-red-600 text-white font-black rounded-2xl uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg shadow-red-600/20"
                             >
                                 Continue to Login
                             </button>
@@ -92,7 +97,7 @@ const Signup = () => {
                                 <input
                                     type="text"
                                     placeholder={isLogin ? "Name or TID" : "e.g. MS Dhoni"}
-                                    className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500 outline-none text-white placeholder:text-slate-600 transition-all font-bold"
+                                    className="w-full p-5 bg-stone-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none text-slate-900 placeholder:text-slate-300 transition-all font-bold"
                                     onChange={(e) => isLogin ? setIdentifier(e.target.value) : setName(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleAction()}
                                 />
@@ -106,7 +111,7 @@ const Signup = () => {
                                         </label>
                                         <div className="flex items-center gap-4">
                                             {profilePic && (
-                                                <img src={profilePic} alt="Preview" className="w-12 h-12 rounded-full object-cover border-2 border-amber-500" />
+                                                <img src={profilePic} alt="Preview" className="w-12 h-12 rounded-full object-cover border-2 border-red-600" />
                                             )}
                                             <label className="flex-1 flex items-center justify-center p-5 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all border-dashed">
                                                 <span className="text-xs font-bold text-slate-400">
@@ -126,7 +131,7 @@ const Signup = () => {
                                             Player Role
                                         </label>
                                         <select 
-                                            className="w-full p-5 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-amber-500 outline-none text-white transition-all font-bold appearance-none"
+                                            className="w-full p-5 bg-stone-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-red-600 outline-none text-slate-900 transition-all font-bold appearance-none"
                                             onChange={(e) => setRole(e.target.value)}
                                         >
                                             <option value="All-Rounder">All-Rounder</option>
@@ -141,7 +146,7 @@ const Signup = () => {
                             <button 
                                 onClick={handleAction} 
                                 disabled={loading}
-                                className="w-full py-5 bg-white text-slate-950 font-black rounded-2xl uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl disabled:opacity-50"
+                                className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl disabled:opacity-50"
                             >
                                 {loading ? "Verifying..." : (isLogin ? "Sign In" : "Create TID")}
                             </button>
@@ -149,10 +154,10 @@ const Signup = () => {
                             <div className="pt-4 text-center">
                                 <button 
                                     onClick={() => setIsLogin(!isLogin)} 
-                                    className="text-xs font-bold text-slate-400 hover:text-amber-500 transition-colors"
+                                    className="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors"
                                 >
                                     {isLogin ? "Don't have a TID? " : "Already registered? "}
-                                    <span className="text-amber-500 underline underline-offset-4 decoration-2 ml-1">
+                                    <span className="text-red-600 underline underline-offset-4 decoration-2 ml-1">
                                         {isLogin ? "Sign Up" : "Login"}
                                     </span>
                                 </button>

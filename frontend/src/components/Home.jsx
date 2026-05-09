@@ -82,7 +82,16 @@ const Home = () => {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans selection:bg-red-200 selection:text-slate-900 pb-20">
+        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans selection:bg-red-200 selection:text-slate-900 pb-20 relative overflow-hidden">
+            {/* BACKGROUND CRICKET DECOR */}
+            <div className="absolute top-1/4 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="absolute bottom-1/4 left-0 w-64 h-64 bg-slate-900/5 rounded-full blur-[100px] pointer-events-none"></div>
+            
+            {/* STUMP SILHOUETTE */}
+            <div className="absolute top-20 right-10 opacity-[0.02] select-none pointer-events-none hidden md:block">
+                <svg width="200" height="400" viewBox="0 0 100 200" fill="currentColor"><rect x="20" y="20" width="8" height="160" /><rect x="46" y="20" width="8" height="160" /><rect x="72" y="20" width="8" height="160" /><rect x="15" y="10" width="70" height="5" /></svg>
+            </div>
+
             {/* Top Profile Bar */}
             <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-4">
