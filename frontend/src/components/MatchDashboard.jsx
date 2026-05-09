@@ -25,6 +25,34 @@ const MatchDashboard = () => {
     const [viewInnings, setViewInnings] = useState(1); // For the toggle
     const [commentary, setCommentary] = useState("");
     const [momentumPulse, setMomentumPulse] = useState(false);
+    const [pollModal, setPollModal] = useState(false);
+    const [transferModal, setTransferModal] = useState(false);
+    const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
+
+    const handleTransfer = async (newAdminId) => {
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/transfer`, { newAdminId });
+            setTransferModal(false);
+        } catch (err) { alert("Transfer failed"); }
+    };
+
+    const handleCreatePoll = async () => {
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll`, { 
+                question: newPoll.question, 
+                options: newPoll.options.filter(o => o.trim() !== '') 
+            });
+            setPollModal(false);
+            setNewPoll({ question: '', options: ['', ''] });
+        } catch (err) { alert("Poll creation failed"); }
+    };
+
+    const handleVote = async (pollIndex, optionIndex) => {
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll/${pollIndex}/vote`, { optionIndex });
+        } catch (err) { console.error("Vote failed"); }
+    };
+    const [momentumPulse, setMomentumPulse] = useState(false);
 
     // AI WIN PROBABILITY & MOMENTUM LOGIC
     const calculateStats = () => {
@@ -723,6 +751,68 @@ const MatchDashboard = () => {
         );
     };
 
+    const renderCrazyQuestions = () => {
+        const polls = match.polls || [];
+        return (
+            <div className="space-y-6 mt-8">
+                {polls.length === 0 ? (
+                    <div className="bg-white/5 border-2 border-dashed border-white/10 rounded-[2.5rem] p-20 text-center">
+                        <span className="text-6xl mb-4 block">🤫</span>
+                        <p className="text-white/40 font-bold italic">No crazy questions yet. Admin is thinking...</p>
+                    </div>
+                ) : (
+                    polls.slice().reverse().map((poll, pIdx) => {
+                        const totalVotes = poll.options.reduce((sum, o) => sum + o.votes, 0);
+                        return (
+                            <div key={pIdx} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom duration-500">
+                                <h3 className="text-xl font-black italic text-white mb-6">"{poll.question}"</h3>
+                                <div className="space-y-4">
+                                    {poll.options.map((opt, oIdx) => {
+                                        const pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                                        return (
+                                            <button 
+                                                key={oIdx}
+                                                onClick={() => handleVote(polls.length - 1 - pIdx, oIdx)}
+                                                className="w-full relative group overflow-hidden rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all text-left"
+                                            >
+                                                <div 
+                                                    className="absolute inset-y-0 left-0 bg-emerald-500/20 transition-all duration-1000" 
+                                                    style={{ width: `${pct}%` }}
+                                                ></div>
+                                                <div className="relative p-4 flex justify-between items-center">
+                                                    <span className="font-bold text-white group-hover:translate-x-1 transition-transform">{opt.text}</span>
+                                                    <span className="text-emerald-400 font-black">{pct}%</span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <p className="mt-4 text-[10px] font-black text-white/20 uppercase tracking-widest">{totalVotes} Total Votes</p>
+                                {/* NEW ADMIN TOOLS */}
+                                <div className="grid grid-cols-2 gap-4 mt-6 no-print">
+                                    <button 
+                                        onClick={() => setTransferModal(true)}
+                                        className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:bg-white/10 transition-all group"
+                                    >
+                                        <span className="text-xl group-hover:scale-110 transition-transform">👑</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Transfer Access</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => setPollModal(true)}
+                                        className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center gap-2 hover:bg-white/10 transition-all group"
+                                    >
+                                        <span className="text-xl group-hover:scale-110 transition-transform">🤔</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Crazy Question</span>
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+            </div>
+        );
+    };
+
     const renderFullScorecard = () => {
         let dataToRender = viewInnings === 1 && match.firstInningsData ? match.firstInningsData : match;
 
@@ -1017,17 +1107,18 @@ const MatchDashboard = () => {
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex bg-white/50 backdrop-blur-md border border-slate-200 p-1 rounded-2xl mb-8 no-print sticky top-4 z-30 shadow-sm overflow-x-auto no-scrollbar">
-                        {['LIVE', 'SCOREBOARD', 'SQUAD'].map((tab) => (
+                    <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 relative z-10">
+                        {['LIVE', 'SCORECARD', 'SQUADS', 'CRAZY QUESTIONS'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 min-w-[100px] py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${activeTab === tab ? 'bg-[#2e1065] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100'}`}
+                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-white'}`}
                             >
                                 {tab}
                             </button>
                         ))}
                     </div>
+                   </div>
 
                     {/* Tab Content */}
                     {activeTab === 'LIVE' && (
@@ -1055,15 +1146,10 @@ const MatchDashboard = () => {
                         </div>
                     )}
 
-                    {activeTab === 'SCOREBOARD' && (
-                        <div className="space-y-4">
-                            {renderFullScorecard()}
-                            {renderBallHistory()}
-                        </div>
-                    )}
-
-                    {activeTab === 'SQUAD' && renderSquads()}
-                </div>
+                    {activeTab === 'SCORECARD' && renderFullScorecard()}
+                    {activeTab === 'SQUADS' && renderSquads()}
+                    {activeTab === 'CRAZY QUESTIONS' && renderCrazyQuestions()}
+                   </div>
 
                 {/* Pinned IPL Score */}
                 {renderPinnedScore()}
@@ -1299,6 +1385,68 @@ const MatchDashboard = () => {
                             <div className="flex gap-4">
                                 <button onClick={handleBowlerSubmit} disabled={!selectedBowler} className={`w-full p-4 rounded-xl font-black text-white tracking-widest transition-all ${selectedBowler ? 'bg-red-600 shadow-xl shadow-red-600/30' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}`}>START NEW OVER</button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* POLL & TRANSFER MODALS */}
+                {pollModal && (
+                    <div className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+                        <div className="bg-[#0f172a] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-in zoom-in duration-300">
+                            <h3 className="text-xl font-black italic text-white mb-6 uppercase tracking-tighter">New Crazy Question</h3>
+                            <input 
+                                type="text"
+                                placeholder="What's your question?"
+                                className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl mb-4 text-white font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                onChange={(e) => setNewPoll({...newPoll, question: e.target.value})}
+                            />
+                            <div className="space-y-2 mb-6">
+                                {newPoll.options.map((opt, i) => (
+                                    <input 
+                                        key={i}
+                                        type="text"
+                                        placeholder={`Option ${i+1}`}
+                                        className="w-full p-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm outline-none focus:bg-white/10 transition-all"
+                                        onChange={(e) => {
+                                            const opts = [...newPoll.options];
+                                            opts[i] = e.target.value;
+                                            setNewPoll({...newPoll, options: opts});
+                                        }}
+                                    />
+                                ))}
+                                <button 
+                                    onClick={() => setNewPoll({...newPoll, options: [...newPoll.options, '']})}
+                                    className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-2 hover:opacity-80"
+                                >
+                                    + Add Option
+                                </button>
+                            </div>
+                            <div className="flex gap-4">
+                                <button onClick={() => setPollModal(false)} className="flex-1 p-4 rounded-2xl bg-white/5 text-white/40 font-bold uppercase text-[10px]">Cancel</button>
+                                <button onClick={handleCreatePoll} className="flex-[2] p-4 rounded-2xl bg-emerald-500 text-white font-black uppercase text-[10px] shadow-xl shadow-emerald-500/20">Publish Poll 🚀</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {transferModal && (
+                    <div className="fixed inset-0 z-[300] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+                        <div className="bg-[#0f172a] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-in zoom-in duration-300">
+                            <h3 className="text-xl font-black italic text-white mb-6 uppercase tracking-tighter">Handover Control</h3>
+                            <p className="text-white/40 text-[10px] font-bold uppercase mb-4 tracking-widest">Select a player from {match.battingTeam.name}</p>
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2 no-scrollbar mb-8">
+                                {match.battingTeam.players.map(p => (
+                                    <button 
+                                        key={p.tid}
+                                        onClick={() => handleTransfer(p.tid)}
+                                        className="w-full p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 text-left flex items-center justify-between group"
+                                    >
+                                        <span className="font-bold text-white group-hover:translate-x-1 transition-transform">{p.name}</span>
+                                        <span className="text-[8px] font-black text-emerald-500 uppercase">Handover 👑</span>
+                                    </button>
+                                ))}
+                            </div>
+                            <button onClick={() => setTransferModal(false)} className="w-full p-4 rounded-2xl bg-white/5 text-white/40 font-bold uppercase text-[10px]">Cancel</button>
                         </div>
                     </div>
                 )}

@@ -296,4 +296,51 @@ app.get('/api/ipl/live', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+// Transfer Match Access
+app.post('/api/matches/:id/transfer', async (req, res) => {
+    try {
+        const { newAdminId } = req.body;
+        const match = await Match.findByIdAndUpdate(req.params.id, { adminId: newAdminId }, { new: true });
+        io.to(req.params.id).emit('scoreUpdated', match);
+        res.json({ success: true, match });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Create Crazy Question (Poll)
+app.post('/api/matches/:id/poll', async (req, res) => {
+    try {
+        const { question, options } = req.body;
+        const pollOptions = options.map(opt => ({ text: opt, votes: 0 }));
+        const match = await Match.findByIdAndUpdate(
+            req.params.id, 
+            { $push: { polls: { question, options: pollOptions, active: true } } },
+            { new: true }
+        );
+        io.to(req.params.id).emit('scoreUpdated', match);
+        res.json({ success: true, match });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Vote on Poll
+app.post('/api/matches/:id/poll/:pollIndex/vote', async (req, res) => {
+    try {
+        const { optionIndex } = req.body;
+        const { id, pollIndex } = req.params;
+        const match = await Match.findById(id);
+        if (!match.polls[pollIndex]) return res.status(404).json({ success: false });
+        
+        match.polls[pollIndex].options[optionIndex].votes += 1;
+        await match.save();
+        
+        io.to(id).emit('scoreUpdated', match);
+        res.json({ success: true, match });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
