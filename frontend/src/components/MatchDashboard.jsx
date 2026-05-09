@@ -24,7 +24,6 @@ const MatchDashboard = () => {
     const [selectedBowler, setSelectedBowler] = useState(null);
     const [viewInnings, setViewInnings] = useState(1); // For the toggle
     const [commentary, setCommentary] = useState("");
-    const [momentumPulse, setMomentumPulse] = useState(false);
     const [pollModal, setPollModal] = useState(false);
     const [transferModal, setTransferModal] = useState(false);
     const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
@@ -1149,7 +1148,6 @@ const MatchDashboard = () => {
                     {activeTab === 'SCORECARD' && renderFullScorecard()}
                     {activeTab === 'SQUADS' && renderSquads()}
                     {activeTab === 'CRAZY QUESTIONS' && renderCrazyQuestions()}
-                   </div>
 
                 {/* Pinned IPL Score */}
                 {renderPinnedScore()}
