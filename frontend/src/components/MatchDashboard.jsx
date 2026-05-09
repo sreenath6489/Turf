@@ -218,8 +218,37 @@ const MatchDashboard = () => {
 
         if (isTargetReached || ((isAllOut || isOversDone) && newMatch.innings === 2)) {
             newMatch.isCompleted = true;
+            
+            // SAVE FINAL NOT-OUT BATSMEN
+            if (newMatch.currentBatsmen.striker) {
+                newMatch.batsmanStats.push({ ...newMatch.currentBatsmen.striker, dismissal: 'not out' });
+            }
+            if (newMatch.currentBatsmen.nonStriker) {
+                newMatch.batsmanStats.push({ ...newMatch.currentBatsmen.nonStriker, dismissal: 'not out' });
+            }
+            // SAVE FINAL BOWLER
+            if (newMatch.currentBowler) {
+                const existing = newMatch.bowlerStats.findIndex(b => b.tid === newMatch.currentBowler.tid);
+                if (existing >= 0) newMatch.bowlerStats[existing] = newMatch.currentBowler;
+                else newMatch.bowlerStats.push(newMatch.currentBowler);
+            }
+
             setActiveModal('MATCH_OVER');
         } else if ((isAllOut || isOversDone) && newMatch.innings === 1) {
+            // SAVE FINAL NOT-OUT BATSMEN (Innings 1)
+            if (newMatch.currentBatsmen.striker) {
+                newMatch.batsmanStats.push({ ...newMatch.currentBatsmen.striker, dismissal: 'not out' });
+            }
+            if (newMatch.currentBatsmen.nonStriker) {
+                newMatch.batsmanStats.push({ ...newMatch.currentBatsmen.nonStriker, dismissal: 'not out' });
+            }
+            // SAVE FINAL BOWLER (Innings 1)
+            if (newMatch.currentBowler) {
+                const existing = newMatch.bowlerStats.findIndex(b => b.tid === newMatch.currentBowler.tid);
+                if (existing >= 0) newMatch.bowlerStats[existing] = newMatch.currentBowler;
+                else newMatch.bowlerStats.push(newMatch.currentBowler);
+            }
+            
             setActiveModal('INNINGS_BREAK');
         } else if (newMatch.balls % 6 === 0 && !isAllOut && !isTargetReached) {
             rotateStrike(newMatch);
