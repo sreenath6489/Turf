@@ -1171,7 +1171,6 @@ const MatchDashboard = () => {
                     {activeTab === 'SCORECARD' && renderFullScorecard()}
                     {activeTab === 'SQUADS' && renderSquads()}
                     {activeTab === 'CRAZY QUESTIONS' && renderCrazyQuestions()}
-                   </div>
 
                 {/* Pinned IPL Score */}
                 {renderPinnedScore()}
