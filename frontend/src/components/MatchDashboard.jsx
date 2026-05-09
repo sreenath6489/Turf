@@ -372,7 +372,15 @@ const MatchDashboard = () => {
 
         newMatch.extras.wides += totalRuns;
 
-        playEventSound('wide');
+        // Detect consecutive wides
+        const lastBall = match.ballHistory[match.ballHistory.length - 1];
+        const isConsecutiveWide = typeof lastBall === 'string' && lastBall.startsWith('Wd');
+
+        if (isConsecutiveWide) {
+            playEventSound('widedouble');
+        } else {
+            playEventSound('wide');
+        }
 
         if (extraRuns % 2 !== 0) rotateStrike(newMatch);
 

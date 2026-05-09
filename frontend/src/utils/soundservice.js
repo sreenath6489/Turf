@@ -1,7 +1,8 @@
 const SOUND_MAP = {
     four: ['/sounds/four.mp3', '/sounds/four1.mp3'],
     six: ['/sounds/six_1.mp3', '/sounds/six_2.mp3'],
-    wide: ['/sounds/wide.mp3', '/sounds/wide1.mp3'],
+    wide: ['/sounds/wide.mp3', '/sounds/wide1.mp3', '/sounds/wide2.mp3'],
+    widedouble: ['/sounds/widedouble.mp3'],
     noball: ['/sounds/noball.mp3', '/sounds/nob.mp3'],
     wicket: ['/sounds/wicket.mp3', '/sounds/wicket1.mp3']
 };
@@ -20,13 +21,11 @@ export const playEventSound = (type) => {
 
     if (!SOUND_MAP[type]) return;
 
-    // Get the current list and counter for this sound type
     const sounds = SOUND_MAP[type];
-    const currentCounter = COUNTERS[type];
+    const currentCounter = COUNTERS[type] || 0;
 
-    // Pick the sound and increment the counter
     const soundPath = sounds[currentCounter % sounds.length];
-    COUNTERS[type]++;
+    if (COUNTERS[type] !== undefined) COUNTERS[type]++;
 
     if (soundPath) {
         const audio = new Audio(soundPath);
