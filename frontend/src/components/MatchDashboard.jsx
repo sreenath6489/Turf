@@ -256,7 +256,6 @@ const MatchDashboard = () => {
 
     const checkInningsStatus = (newMatch) => {
         const teamSize = newMatch.battingTeam.players.length;
-        const teamSize = newMatch.battingTeam.players.length;
         const isAllOut = newMatch.wickets >= teamSize;
         const isOversDone = newMatch.balls >= newMatch.overs * 6;
         const isTargetReached = newMatch.innings === 2 && newMatch.score >= newMatch.target;
