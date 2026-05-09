@@ -949,6 +949,7 @@ const MatchDashboard = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
             );
 
             return (
