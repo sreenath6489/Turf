@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { toPng } from 'html-to-image';
-import { playEventSound } from '../utils/soundservice.js';
+import { playEventSound, speakCommentary } from '../utils/soundservice.js';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
@@ -31,7 +31,14 @@ const MatchDashboard = () => {
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
+        
+        // AI Commentary Voice Trigger
+        const mode = localStorage.getItem('commentaryMode') || 'AI';
+        if (mode === 'AI') {
+            speakCommentary(message);
+        }
+
+        setTimeout(() => setToast(null), 1500); // Snappier: 1.5s instead of 3s
     };
     const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
 
