@@ -859,7 +859,7 @@ const MatchDashboard = () => {
             const ext = dataToRender.extras || { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
             const totalExtras = ext.wides + ext.noBalls + ext.byes + ext.legByes;
 
-            return (
+            const scorecardContent = (
                 <div className="bg-white border border-red-900/10 rounded-3xl overflow-hidden mt-8 shadow-md">
                     {/* Batting Header */}
                     <div className="p-4 border-b border-red-900/10 flex justify-between bg-red-50 items-center">
@@ -949,10 +949,10 @@ const MatchDashboard = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
+            );
 
-        return (
-            <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 md:p-8 font-sans pb-40">
+            return (
+                <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 md:p-8 font-sans pb-40">
                 {/* PREMIUM TOAST NOTIFICATION */}
                 {toast && (
                     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[500] animate-in slide-in-from-top duration-300">
@@ -1078,7 +1078,7 @@ const MatchDashboard = () => {
                         </svg>
                     </button>
 
-                    {/* Header Widget */}
+                    {/* HEADER WIDGET */}
                     <div className="bg-[#2e1065] rounded-[2.5rem] p-8 shadow-2xl text-white mb-6 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full -ml-16 -mb-16 blur-3xl"></div>
@@ -1207,12 +1207,82 @@ const MatchDashboard = () => {
                                     </button>
                                 </div>
                             )}
+
+                            {/* PLAYER WIDGETS ARE BELOW THIS IN THE CODE */}
                         </div>
                     )}
 
-                    {activeTab === 'SCORECARD' && renderFullScorecard()}
-                    {activeTab === 'SQUADS' && renderSquads()}
-                    {activeTab === 'CRAZY QUESTIONS' && renderCrazyQuestions()}
+                    {activeTab === 'SCORECARD' && scorecardContent}
+
+                    {activeTab === 'CRAZY QUESTIONS' && (
+                        <div id="crazy-questions-section" className="mt-8 mb-20 px-2">
+                             <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">Crazy <span className="text-red-600">Questions</span></h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Match Engagement Arena</p>
+                                </div>
+                                {isAdmin && (
+                                    <button 
+                                        onClick={() => setPollModal(true)}
+                                        className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all flex items-center gap-2 shadow-lg"
+                                    >
+                                        <span>➕</span> Post Question
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="space-y-6">
+                                {!match.polls || match.polls.length === 0 ? (
+                                    <div className="bg-white border border-dashed border-slate-200 p-12 rounded-[2.5rem] text-center">
+                                        <span className="text-4xl mb-4 block opacity-30">🤔</span>
+                                        <p className="text-slate-400 font-bold text-sm italic">No active questions. {isAdmin ? "Start one now!" : "Waiting for the admin..."}</p>
+                                    </div>
+                                ) : (
+                                    [...match.polls].reverse().map((poll, pIdx) => {
+                                        const actualIdx = match.polls.length - 1 - pIdx;
+                                        const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+                                        
+                                        return (
+                                            <div key={actualIdx} className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-red-900/5 relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
+                                                <h4 className="text-xl font-black italic text-slate-900 mb-6 leading-tight">"{poll.question}"</h4>
+                                                
+                                                <div className="space-y-3">
+                                                    {poll.options.map((opt, oIdx) => {
+                                                        const percent = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                                                        return (
+                                                            <button 
+                                                                key={oIdx}
+                                                                onClick={() => handleVote(actualIdx, oIdx)}
+                                                                className="w-full relative h-16 bg-stone-50 rounded-2xl border border-slate-100 overflow-hidden group hover:border-red-200 transition-all text-left"
+                                                            >
+                                                                <div 
+                                                                    className="absolute inset-0 bg-red-600/5 transition-all duration-1000"
+                                                                    style={{ width: `${percent}%` }}
+                                                                />
+                                                                <div className="absolute inset-0 px-5 flex items-center justify-between z-10">
+                                                                    <span className="font-bold text-slate-700 uppercase italic text-xs">{opt.text}</span>
+                                                                    <span className="font-black text-red-600 text-sm">{percent}%</span>
+                                                                </div>
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <p className="mt-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">{totalVotes} Fans Voted</p>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'SQUADS' && (
+                        <div className="bg-white p-12 rounded-[2.5rem] text-center border border-dashed border-slate-200">
+                             <span className="text-4xl mb-4 block opacity-30">👥</span>
+                             <p className="text-slate-400 font-bold text-sm italic">Squad lineups are currently being updated.</p>
+                        </div>
+                    )}
 
                 {/* Pinned IPL Score */}
                 {renderPinnedScore()}
