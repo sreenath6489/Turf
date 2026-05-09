@@ -59,6 +59,9 @@ const SetupPlayers = () => {
             const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/create`, matchData);
 
             if (res.data.success) {
+                // CLEAR TEMP STATES
+                localStorage.removeItem('tempMatchState');
+                localStorage.removeItem('tempSetupState');
                 navigate(`/scoreboard/${res.data.match._id}`, { state: res.data.match });
             }
         } catch (err) {

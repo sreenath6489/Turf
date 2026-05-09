@@ -24,6 +24,70 @@ const MatchDashboard = () => {
     const [selectedBowler, setSelectedBowler] = useState(null);
     const [viewInnings, setViewInnings] = useState(1); // For the toggle
     const [commentary, setCommentary] = useState("");
+    const [momentumPulse, setMomentumPulse] = useState(false);
+
+    // AI WIN PROBABILITY & MOMENTUM LOGIC
+    const calculateStats = () => {
+        if (!match) return { winProb: 50, momentum: 50 };
+
+        const isSecondInnings = match.innings === 2;
+        let winProb = 50;
+        
+        if (isSecondInnings) {
+            const target = match.target || (match.firstInningsData?.score + 1);
+            const runsNeeded = target - match.score;
+            const totalBalls = match.overs * 6;
+            const ballsLeft = totalBalls - match.balls;
+            const wicketsLeft = (match.battingTeam.players.length - 1) - match.wickets;
+
+            if (ballsLeft > 0) {
+                // Required Run Rate
+                const rrr = (runsNeeded / ballsLeft) * 6;
+                // Current Run Rate
+                const crr = match.score / (match.balls / 6 || 1);
+                
+                // Heuristic Win Prob: Wickets are worth ~7% each, RRR vs CRR delta worth ~5% per unit
+                winProb = 50 + (wicketsLeft * 7) - (rrr - crr) * 5 - ((runsNeeded/ballsLeft) * 10);
+                
+                // Factor in balls left (pressure)
+                if (ballsLeft < 12) winProb -= (runsNeeded > ballsLeft ? 10 : 0);
+            } else {
+                winProb = runsNeeded <= 0 ? 100 : 0;
+            }
+        }
+
+        // Momentum Logic (Last 6 balls)
+        const recentBalls = match.ballHistory?.slice(-6) || [];
+        let momentum = 50;
+        recentBalls.forEach(ball => {
+            if (typeof ball === 'number') {
+                if (ball >= 4) momentum += 15;
+                else if (ball === 0) momentum -= 5;
+                else momentum += 2;
+            } else if (typeof ball === 'string') {
+                if (ball.startsWith('W')) momentum -= 25;
+                if (ball.startsWith('Wd') || ball.startsWith('NB')) momentum -= 5;
+            }
+        });
+        
+        // Pulse Effect detection
+        const lastTwo = match.ballHistory?.slice(-2) || [];
+        const isHot = lastTwo.length === 2 && lastTwo.every(b => typeof b === 'number' && b === 6);
+
+        winProb = Math.max(1, Math.min(99, Math.round(winProb)));
+        momentum = Math.max(10, Math.min(90, momentum));
+
+        return { winProb, momentum, isHot };
+    };
+
+    const { winProb, momentum, isHot } = calculateStats();
+
+    useEffect(() => {
+        if (isHot) {
+            setMomentumPulse(true);
+            setTimeout(() => setMomentumPulse(false), 3000);
+        }
+    }, [match?.balls]);
     const [history, setHistory] = useState([]);
     const [activeTab, setActiveTab] = useState('LIVE');
     const [pinnedIPL, setPinnedIPL] = useState(null);
@@ -61,7 +125,14 @@ const MatchDashboard = () => {
         fetchMatch();
 
         socket.on('scoreUpdated', (updatedMatch) => {
-            setMatch(updatedMatch);
+            // SYNC FIX: Only update if the incoming data is newer or same as local
+            setMatch(prev => {
+                if (!prev || updatedMatch.balls >= prev.balls || updatedMatch.innings > prev.innings || updatedMatch.isCompleted) {
+                    return updatedMatch;
+                }
+                return prev;
+            });
+
             if (updatedMatch.innings > viewInnings && !updatedMatch.isCompleted) {
                 setViewInnings(updatedMatch.innings);
             }
@@ -105,6 +176,13 @@ const MatchDashboard = () => {
             socket.off('newCommentary');
         };
     }, [id, navigate]);
+
+    const [specialEvent, setSpecialEvent] = useState(null);
+
+    const triggerSpecial = (type) => {
+        setSpecialEvent(type);
+        setTimeout(() => setSpecialEvent(null), 4000);
+    };
 
     if (loading || !match) return <div className="min-h-screen bg-[#020617] text-white flex items-center justify-center font-black">Loading Pitch...</div>;
 
@@ -193,7 +271,13 @@ const MatchDashboard = () => {
         if (run === 6) {
             eventDesc = `Massive SIX! Out of the park!`;
             playEventSound('six');
+            triggerSpecial('SIX');
         }
+        
+        if (newMatch.score === 7 || run === 7) {
+            triggerSpecial('THALA');
+        }
+
         syncMatch(newMatch, { runs: run, type: run >= 4 ? 'boundary' : 'run', description: eventDesc });
     };
 
@@ -324,6 +408,10 @@ const MatchDashboard = () => {
 
         if (wicketData.runs % 2 !== 0 && !isLastWicket) {
             rotateStrike(newMatch);
+        }
+
+        if (match.currentBatsmen.striker.runs === 0) {
+            triggerSpecial('DUCK');
         }
 
         checkInningsStatus(newMatch);
@@ -726,6 +814,49 @@ const MatchDashboard = () => {
 
         return (
             <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-4 md:p-8 font-sans pb-40">
+                {/* SPECIAL FUNNY EVENTS OVERLAY */}
+                {specialEvent && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center pointer-events-none overflow-hidden">
+                        {specialEvent === 'SIX' && (
+                            <div className="animate-in zoom-in duration-500 flex flex-col items-center">
+                                <h1 className="text-9xl font-black italic text-emerald-500 drop-shadow-[0_0_50px_rgba(16,185,129,0.8)] animate-bounce">SIXER!</h1>
+                                <p className="bg-white/10 backdrop-blur-md px-8 py-2 rounded-full text-white font-bold tracking-widest mt-4">OUT OF THE TURF! 🔥</p>
+                            </div>
+                        )}
+                        {specialEvent === 'DUCK' && (
+                            <div className="animate-in slide-in-from-top-10 duration-500 flex flex-col items-center">
+                                <span className="text-[12rem] animate-bounce">🦆</span>
+                                <h1 className="text-6xl font-black italic text-rose-500 bg-white/90 px-10 py-4 rounded-[3rem] shadow-2xl -mt-10 border-4 border-rose-100">QUACK!</h1>
+                                <p className="text-white font-black uppercase tracking-[0.5em] mt-4 drop-shadow-lg">A Golden Duck!</p>
+                            </div>
+                        )}
+                        {specialEvent === 'THALA' && (
+                            <div className="animate-in fade-in zoom-in duration-700 flex flex-col items-center">
+                                <h1 className="text-8xl font-black italic text-yellow-400 drop-shadow-[0_0_40px_rgba(250,204,21,0.6)]">7</h1>
+                                <p className="bg-yellow-400 text-slate-900 px-6 py-2 rounded-full font-black tracking-widest -mt-4 rotate-3 shadow-xl">THALA FOR A REASON</p>
+                            </div>
+                        )}
+                        
+                        {/* Confetti Animation (Simulated with random particles if SIX or WIN) */}
+                        {(specialEvent === 'SIX' || match.isCompleted) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                {[...Array(20)].map((_, i) => (
+                                    <div 
+                                        key={i} 
+                                        className={`absolute w-3 h-3 rounded-sm animate-ping`}
+                                        style={{ 
+                                            left: `${Math.random() * 100}%`, 
+                                            top: `${Math.random() * 100}%`, 
+                                            backgroundColor: ['#ef4444', '#10b981', '#3b82f6', '#eab308'][Math.floor(Math.random() * 4)],
+                                            animationDelay: `${Math.random() * 2}s`
+                                        }}
+                                    ></div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* LIVE COMMENTARY OVERLAY */}
                 {commentary && commentaryMode === 'AI' && (
                     <div className="fixed top-24 left-6 right-6 z-[100] animate-bounce max-w-4xl mx-auto no-print">
@@ -792,6 +923,40 @@ const MatchDashboard = () => {
                                     <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
                                     CRR: {getEcon(match.score, match.balls)}
                                 </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 grid grid-cols-2 gap-4 relative z-10">
+                            {/* Win Probability */}
+                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-200/50 mb-2">AI Win Probability</p>
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs font-black italic">{match.battingTeam.name}</span>
+                                    <span className="text-xs font-black text-emerald-400">{winProb}%</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full bg-emerald-500 transition-all duration-1000 ease-out" 
+                                        style={{ width: `${winProb}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Momentum Meter */}
+                            <div className={`bg-white/5 backdrop-blur-md rounded-2xl p-4 border transition-all duration-500 ${momentumPulse ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] scale-105' : 'border-white/10'}`}>
+                                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-purple-200/50 mb-2">Momentum Meter</p>
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[8px] font-black text-white/40 italic">BOWLING</span>
+                                    {momentumPulse && <span className="text-[8px] font-black text-emerald-400 animate-pulse italic">ON FIRE 🔥</span>}
+                                    <span className="text-[8px] font-black text-white/40 italic">BATTING</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden relative">
+                                    <div 
+                                        className={`h-full transition-all duration-700 ease-out ${momentum > 50 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                                        style={{ width: `${momentum}%`, marginLeft: momentum > 50 ? '50%' : `${momentum}%`, transform: momentum > 50 ? 'none' : 'translateX(-100%)' }}
+                                    ></div>
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 z-10"></div>
+                                </div>
                             </div>
                         </div>
 
