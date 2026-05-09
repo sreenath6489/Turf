@@ -8,7 +8,7 @@ import MatchDashboard from './components/MatchDashboard.jsx';
 import SetupPlayers from './components/SetupPlayers';
 import PlayerStats from './components/PlayerStats';
 import SquadsPoster from './components/SquadsPoster';
-
+import Welcome from './components/Welcome';
 
 // KEEP THIS OUTSIDE THE APP FUNCTION
 const ProtectedRoute = ({ children }) => {
@@ -21,9 +21,12 @@ const ProtectedRoute = ({ children }) => {
 
 // THE MAIN FUNCTION
 export default function App() {
+  const [showWelcome, setShowWelcome] = React.useState(true);
+
   return (
     <Router>
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="min-h-screen bg-[#0B0E14] text-white">
+        {showWelcome && <Welcome onEnter={() => setShowWelcome(false)} />}
         <Routes>
           {/* Public Route */}
           <Route path="/" element={<Signup />} />
