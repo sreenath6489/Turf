@@ -239,7 +239,8 @@ const MatchDashboard = () => {
         localStorage.setItem('commentaryMode', mode);
     };
 
-    const isLastWicket = match.wickets >= match.battingTeam.players.length - 2;
+    const isLastWicket = match.wickets >= match.battingTeam.players.length - 1;
+    const isSoloMode = match.wickets === match.battingTeam.players.length - 1;
 
     const syncMatch = (newMatchState, newBallEvent = {}) => {
         setMatch(newMatchState);
@@ -255,7 +256,8 @@ const MatchDashboard = () => {
 
     const checkInningsStatus = (newMatch) => {
         const teamSize = newMatch.battingTeam.players.length;
-        const isAllOut = newMatch.wickets >= teamSize - 1;
+        const teamSize = newMatch.battingTeam.players.length;
+        const isAllOut = newMatch.wickets >= teamSize;
         const isOversDone = newMatch.balls >= newMatch.overs * 6;
         const isTargetReached = newMatch.innings === 2 && newMatch.score >= newMatch.target;
 
@@ -429,7 +431,7 @@ const MatchDashboard = () => {
     };
 
     const handleWicketSubmit = () => {
-        if (!isLastWicket && !wicketData.nextBatsman && wicketData.type !== 'AllOut') {
+        if (!isLastWicket && !wicketData.nextBatsman && wicketData.type !== 'AllOut' && match.wickets < match.battingTeam.players.length - 2) {
             alert("Select the next batsman!");
             return;
         }
@@ -478,10 +480,17 @@ const MatchDashboard = () => {
         });
 
         if (!isLastWicket) {
-            newMatch.currentBatsmen.striker = {
-                ...wicketData.nextBatsman,
-                runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
-            };
+            if (match.wickets === match.battingTeam.players.length - 2) {
+                // This was the 2nd to last wicket. One player is left.
+                // Move the non-striker to striker for solo play.
+                newMatch.currentBatsmen.striker = { ...newMatch.currentBatsmen.nonStriker };
+                newMatch.currentBatsmen.nonStriker = null;
+            } else {
+                newMatch.currentBatsmen.striker = {
+                    ...wicketData.nextBatsman,
+                    runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
+                };
+            }
         } else {
             newMatch.currentBatsmen.striker = null;
         }
@@ -1176,7 +1185,107 @@ const MatchDashboard = () => {
                                 </div>
                             )}
 
-                            {/* PLAYER WIDGETS ARE BELOW THIS IN THE CODE */}
+                            {/* PLAYER WIDGETS */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* STRIKER */}
+                                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border-l-8 border-red-600 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity">
+                                        <svg width="60" height="60" viewBox="0 0 100 100" fill="currentColor"><path d="M20 20 L80 80 M80 20 L20 80" stroke="currentColor" strokeWidth="10"/></svg>
+                                    </div>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <span className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping"></span> STRIKING
+                                            </span>
+                                            <h4 className="text-2xl font-black italic text-slate-900 uppercase tracking-tighter mt-1">{match.currentBatsmen.striker?.name}</h4>
+                                        </div>
+                                        <div className="text-right">
+                                            <h3 className="text-4xl font-black italic leading-none">{match.currentBatsmen.striker?.runs}</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Runs ({match.currentBatsmen.striker?.balls})</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                        <div className="flex-1">
+                                            <p className="text-[8px] font-black text-slate-400 uppercase mb-1">SR</p>
+                                            <p className="text-sm font-black italic">{getStrikeRate(match.currentBatsmen.striker?.runs, match.currentBatsmen.striker?.balls)}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="bg-stone-50 px-3 py-1 rounded-lg border border-slate-200">
+                                                <span className="text-[10px] font-black text-slate-900">{match.currentBatsmen.striker?.fours} <span className="text-slate-400">4s</span></span>
+                                            </div>
+                                            <div className="bg-stone-50 px-3 py-1 rounded-lg border border-slate-200">
+                                                <span className="text-[10px] font-black text-slate-900">{match.currentBatsmen.striker?.sixes} <span className="text-slate-400">6s</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* NON-STRIKER OR SOLO MODE */}
+                                {match.currentBatsmen.nonStriker ? (
+                                    <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border-l-8 border-slate-900 relative overflow-hidden group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Partner</span>
+                                                <h4 className="text-2xl font-black italic text-slate-900 uppercase tracking-tighter mt-1">{match.currentBatsmen.nonStriker.name}</h4>
+                                            </div>
+                                            <div className="text-right">
+                                                <h3 className="text-4xl font-black italic leading-none text-slate-400">{match.currentBatsmen.nonStriker.runs}</h3>
+                                                <p className="text-[10px] font-bold text-slate-300 mt-1 uppercase">Runs ({match.currentBatsmen.nonStriker.balls})</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 pt-4 border-t border-slate-100">
+                                            <div className="flex-1">
+                                                <p className="text-[8px] font-black text-slate-400 uppercase mb-1">SR</p>
+                                                <p className="text-sm font-black italic text-slate-400">{getStrikeRate(match.currentBatsmen.nonStriker.runs, match.currentBatsmen.nonStriker.balls)}</p>
+                                            </div>
+                                            <div className="flex gap-2 opacity-50">
+                                                <div className="bg-stone-50 px-3 py-1 rounded-lg border border-slate-200">
+                                                    <span className="text-[10px] font-black text-slate-900">{match.currentBatsmen.nonStriker.fours} <span className="text-slate-400">4s</span></span>
+                                                </div>
+                                                <div className="bg-stone-50 px-3 py-1 rounded-lg border border-slate-200">
+                                                    <span className="text-[10px] font-black text-slate-900">{match.currentBatsmen.nonStriker.sixes} <span className="text-slate-400">6s</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gradient-to-br from-red-600 to-rose-900 p-6 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')] opacity-10"></div>
+                                        <span className="text-4xl mb-2 animate-bounce">🦁</span>
+                                        <h4 className="text-2xl font-black italic text-white uppercase tracking-tighter leading-none">SOLO WARRIOR</h4>
+                                        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mt-2">The last hero takes the stand!</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* CURRENT BOWLER CARD */}
+                            {match.currentBowler && (
+                                <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 scale-150">
+                                        <svg width="100" height="100" viewBox="0 0 100 100" fill="white"><circle cx="50" cy="50" r="40" stroke="white" strokeWidth="5" fill="none"/></svg>
+                                    </div>
+                                    <div className="flex justify-between items-center relative z-10">
+                                        <div className="flex items-center gap-6">
+                                            <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center text-3xl shadow-xl shadow-red-600/20">⚾</div>
+                                            <div>
+                                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> CURRENT BOWLER
+                                                </span>
+                                                <h4 className="text-3xl font-black italic text-white uppercase tracking-tighter mt-1">{match.currentBowler.name}</h4>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="flex items-baseline justify-end gap-2">
+                                                <h3 className="text-5xl font-black italic text-white leading-none">{match.currentBowler.wickets}</h3>
+                                                <span className="text-2xl font-black text-white/30 italic">/{match.currentBowler.runs}</span>
+                                            </div>
+                                            <p className="text-[10px] font-bold text-white/40 mt-2 uppercase tracking-widest">
+                                                Overs: {formatOvers(match.currentBowler.balls)} • Econ: {getEcon(match.currentBowler.runs, match.currentBowler.balls)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -1439,9 +1548,16 @@ const MatchDashboard = () => {
                                 </div>
                             )}
                             {isLastWicket && (
-                                <div className="mb-8 text-center bg-red-50 text-red-600 p-4 rounded-xl border border-red-200">
-                                    <p className="font-bold">ALL OUT!</p>
-                                    <p className="text-xs">This is the final wicket.</p>
+                                <div className="mb-8 text-center bg-red-600 text-white p-6 rounded-[2.5rem] shadow-xl shadow-red-600/20 border-b-4 border-black/20">
+                                    <p className="font-black text-2xl italic uppercase italic tracking-tighter">THE FINAL SHOWDOWN!</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">This is the absolute final wicket of the innings.</p>
+                                </div>
+                            )}
+
+                            {!isLastWicket && match.wickets === match.battingTeam.players.length - 2 && (
+                                <div className="mb-8 text-center bg-orange-500 text-white p-6 rounded-[2.5rem] shadow-xl shadow-orange-500/20 border-b-4 border-black/20">
+                                    <p className="font-black text-2xl italic uppercase italic tracking-tighter">SOLO MODE ACTIVATED!</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">The last warrior battles alone!</p>
                                 </div>
                             )}
 

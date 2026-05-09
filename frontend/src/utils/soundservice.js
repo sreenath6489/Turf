@@ -15,6 +15,8 @@ const COUNTERS = {
     wicket: 0
 };
 
+let currentAudio = null;
+
 export const playEventSound = (type) => {
     // Check if global sound is muted
     const isMuted = localStorage.getItem('soundMuted') === 'true';
@@ -25,6 +27,12 @@ export const playEventSound = (type) => {
 
     if (!SOUND_MAP[type]) return;
 
+    // Interrupt previous sound
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+
     const sounds = SOUND_MAP[type];
     const currentCounter = COUNTERS[type] || 0;
 
@@ -33,6 +41,7 @@ export const playEventSound = (type) => {
 
     if (soundPath) {
         const audio = new Audio(soundPath);
+        currentAudio = audio;
         audio.play().catch(e => console.log("Audio play failed:", e));
     }
 };
