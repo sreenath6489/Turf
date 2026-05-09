@@ -19,10 +19,25 @@ const SetupPlayers = () => {
         }
     }, [navState, state, navigate]);
 
-    const [striker, setStriker] = useState(null);
-    const [nonStriker, setNonStriker] = useState(null);
-    const [bowler, setBowler] = useState(null);
+    const [striker, setStriker] = useState(() => {
+        const saved = localStorage.getItem('setupStriker');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [nonStriker, setNonStriker] = useState(() => {
+        const saved = localStorage.getItem('setupNonStriker');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [bowler, setBowler] = useState(() => {
+        const saved = localStorage.getItem('setupBowler');
+        return saved ? JSON.parse(saved) : null;
+    });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (striker) localStorage.setItem('setupStriker', JSON.stringify(striker));
+        if (nonStriker) localStorage.setItem('setupNonStriker', JSON.stringify(nonStriker));
+        if (bowler) localStorage.setItem('setupBowler', JSON.stringify(bowler));
+    }, [striker, nonStriker, bowler]);
 
     if (!state) return null;
 
@@ -59,8 +74,12 @@ const SetupPlayers = () => {
             const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/create`, matchData);
 
             if (res.data.success) {
+                // CLEAR TEMP STATES
                 localStorage.removeItem('tempMatchState');
                 localStorage.removeItem('tempSetupState');
+                localStorage.removeItem('setupStriker');
+                localStorage.removeItem('setupNonStriker');
+                localStorage.removeItem('setupBowler');
                 navigate(`/scoreboard/${res.data.match._id}`, { state: res.data.match });
             }
         } catch (err) {

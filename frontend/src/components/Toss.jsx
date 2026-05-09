@@ -20,10 +20,20 @@ const Toss = () => {
 
     const [isSpinning, setIsSpinning] = useState(false);
     const [rotation, setRotation] = useState(0);
-    const [side, setSide] = useState(null); 
-    const [tossWinner, setTossWinner] = useState(null);
-    const [decision, setDecision] = useState(null);
-    const [overs, setOvers] = useState(5);
+    const [side, setSide] = useState(() => localStorage.getItem('tossSide')); 
+    const [tossWinner, setTossWinner] = useState(() => {
+        const saved = localStorage.getItem('tossWinner');
+        return saved ? JSON.parse(saved) : null;
+    });
+    const [decision, setDecision] = useState(() => localStorage.getItem('tossDecision'));
+    const [overs, setOvers] = useState(() => localStorage.getItem('tossOvers') || 5);
+
+    useEffect(() => {
+        if (side) localStorage.setItem('tossSide', side);
+        if (tossWinner) localStorage.setItem('tossWinner', JSON.stringify(tossWinner));
+        if (decision) localStorage.setItem('tossDecision', decision);
+        localStorage.setItem('tossOvers', overs);
+    }, [side, tossWinner, decision, overs]);
 
     const flipCoin = () => {
         if (isSpinning) return;
@@ -47,6 +57,12 @@ const Toss = () => {
     const startMatch = () => {
         const battingTeam = decision === 'Bat' ? tossWinner : (tossWinner.name === state.teamA.name ? state.teamB : state.teamA);
         const bowlingTeam = battingTeam.name === state.teamA.name ? state.teamB : state.teamA;
+
+        localStorage.removeItem('tempMatchState');
+        localStorage.removeItem('tossSide');
+        localStorage.removeItem('tossWinner');
+        localStorage.removeItem('tossDecision');
+        localStorage.removeItem('tossOvers');
 
         navigate('/setup-players', {
             state: { ...state, battingTeam, bowlingTeam, totalOvers: overs }
