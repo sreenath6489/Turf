@@ -51,21 +51,20 @@ const Signup = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#FAF4EA] p-6 relative overflow-hidden">
-            {/* Animated Background Cricketing Elements */}
-            <div className="absolute top-10 -left-20 w-96 h-96 bg-red-600/5 rounded-full blur-[100px] animate-pulse"></div>
-            <div className="absolute bottom-10 -right-20 w-96 h-96 bg-slate-900/5 rounded-full blur-[100px] animate-pulse delay-700"></div>
-            
-            {/* STUMP SILHOUETTE */}
-            <div className="absolute top-1/2 left-10 -translate-y-1/2 opacity-[0.03] select-none pointer-events-none">
-                <svg width="200" height="400" viewBox="0 0 100 200" fill="currentColor"><rect x="20" y="20" width="8" height="160" /><rect x="46" y="20" width="8" height="160" /><rect x="72" y="20" width="8" height="160" /><rect x="15" y="10" width="70" height="5" /></svg>
-            </div>
+            {/* Grainy Texture Overlay */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/pinstripe-light.png')]"></div>
 
+            {/* Animated Background Cricketing Elements */}
+            <div className="absolute top-10 -left-20 w-96 h-96 bg-red-600/10 rounded-full blur-[120px] animate-pulse"></div>
+            <div className="absolute bottom-10 -right-20 w-96 h-96 bg-red-900/5 rounded-full blur-[100px] animate-pulse delay-700"></div>
+            
             <div className="w-full max-w-md z-10">
                 <div className="text-center mb-10">
-                    <h1 className="text-6xl font-black text-slate-950 mb-2 tracking-tighter italic">
+                    <div className="inline-block px-4 py-1.5 bg-red-600 text-white text-[8px] font-black uppercase tracking-[0.4em] rounded-full mb-4 shadow-xl shadow-red-600/20">Official Platform</div>
+                    <h1 className="text-7xl font-black text-slate-950 mb-2 tracking-tighter italic leading-none">
                         TURF<span className="text-red-600">PRO</span>
                     </h1>
-                    <p className="text-red-600 font-bold uppercase tracking-[0.4em] text-[10px]">The Master Class Edition</p>
+                    <p className="text-slate-400 font-bold uppercase tracking-[0.4em] text-[10px]">Professional Scorekeeping Engine</p>
                 </div>
 
                 <div className="bg-white border border-red-900/10 p-10 rounded-[3rem] shadow-2xl shadow-red-900/5">

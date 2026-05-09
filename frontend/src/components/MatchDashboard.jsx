@@ -134,6 +134,7 @@ const MatchDashboard = () => {
     const [pinnedIPL, setPinnedIPL] = useState(null);
     const [commentaryMode, setCommentaryMode] = useState(() => localStorage.getItem('commentaryMode') || 'AI');
     const [soundMuted, setSoundMuted] = useState(() => localStorage.getItem('soundMuted') === 'true');
+    const [showSummary, setShowSummary] = useState(false);
 
     // Pre-load voices for macOS/Chrome bug
     useEffect(() => {
@@ -1043,27 +1044,24 @@ const MatchDashboard = () => {
                     
                     {/* TOP NAVIGATION TABS */}
                     <div className="flex gap-2 p-2 bg-stone-100 rounded-3xl mb-6 no-print items-center">
-                        <button 
-                            className="flex-1 py-3 bg-white shadow-sm rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-600"
-                        >
-                            Scoreboard
-                        </button>
-                        <button 
-                            onClick={() => {
-                                const element = document.getElementById('crazy-questions-section');
-                                if (element) element.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            className="flex-1 py-3 hover:bg-white/50 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 flex items-center justify-center gap-2"
-                        >
-                            Crazy Questions {match.polls?.length > 0 && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>}
-                        </button>
+                        <div className="flex-1 flex gap-1 p-1 bg-white rounded-2xl border border-slate-200">
+                             {['LIVE', 'SCORECARD', 'CRAZY QUESTIONS'].map(tab => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-red-600 text-white shadow-xl shadow-red-600/20' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {tab === 'CRAZY QUESTIONS' ? 'Questions' : tab}
+                                </button>
+                            ))}
+                        </div>
                         <button 
                             onClick={() => {
                                 const newVal = !soundMuted;
                                 setSoundMuted(newVal);
                                 localStorage.setItem('soundMuted', newVal);
                             }}
-                            className={`p-3 rounded-2xl transition-all ${soundMuted ? 'bg-slate-200 text-slate-400' : 'bg-white text-red-600 shadow-sm'}`}
+                            className={`p-3 rounded-2xl transition-all ${soundMuted ? 'bg-slate-200 text-slate-400 opacity-50' : 'bg-white text-red-600 shadow-xl border border-red-100'}`}
                         >
                             {soundMuted ? '🔇' : '🔊'}
                         </button>
@@ -1153,36 +1151,6 @@ const MatchDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Commentary Mode Toggle */}
-                    <div className="flex justify-center mb-6 no-print">
-                        <div className="inline-flex bg-white/30 backdrop-blur-md p-1 rounded-2xl border border-white/10 shadow-sm">
-                            <button 
-                                onClick={() => handleModeToggle('AI')}
-                                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'AI' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                            >
-                                AI Voice
-                            </button>
-                            <button 
-                                onClick={() => handleModeToggle('DIAL')}
-                                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'DIAL' ? 'bg-[#2e1065] text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                            >
-                                🎬 Dialogues
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Tab Navigation */}
-                    <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 relative z-10">
-                        {['LIVE', 'SCORECARD', 'SQUADS', 'CRAZY QUESTIONS'].map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-white'}`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
 
                     {/* Tab Content */}
                     {activeTab === 'LIVE' && (
@@ -1337,12 +1305,22 @@ const MatchDashboard = () => {
                             <h2 className="text-4xl font-black italic text-red-600 mb-2">MATCH OVER!</h2>
                             <div className="my-8">
                                 <p className="text-lg font-bold text-slate-600">Target was {match.target}</p>
-                                <p className="text-5xl font-black text-slate-900 my-4">{match.score}/{match.wickets}</p>
-                                <p className="text-xl font-bold text-red-600">
-                                    {match.score >= match.target ? `${match.battingTeam.name} WON!` : `${match.bowlingTeam.name} WON!`}
-                                </p>
+                                <h3 className="text-3xl font-black text-slate-900 mt-2 uppercase italic">{match.result}</h3>
                             </div>
-                            <button onClick={() => navigate('/home')} className="w-full p-4 rounded-xl font-black text-white bg-red-600 shadow-xl shadow-red-600/30 tracking-widest transition-all mb-4">BACK TO HOME</button>
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => setShowSummary(true)}
+                                    className="w-full p-5 rounded-xl font-black text-white bg-slate-900 shadow-xl tracking-widest transition-all hover:scale-105 flex items-center justify-center gap-3"
+                                >
+                                    <span>📊</span> VIEW MATCH SUMMARY
+                                </button>
+                                <button 
+                                    onClick={() => navigate('/home')} 
+                                    className="w-full p-5 rounded-xl font-black text-slate-400 bg-stone-100 tracking-widest transition-all hover:bg-stone-200"
+                                >
+                                    BACK TO HOME
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -1517,6 +1495,123 @@ const MatchDashboard = () => {
 
                             <div className="flex gap-4">
                                 <button onClick={handleBowlerSubmit} disabled={!selectedBowler} className={`w-full p-4 rounded-xl font-black text-white tracking-widest transition-all ${selectedBowler ? 'bg-red-600 shadow-xl shadow-red-600/30' : 'bg-stone-200 text-stone-400 cursor-not-allowed'}`}>START NEW OVER</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* PREMIUM IPL MATCH SUMMARY MODAL */}
+                {showSummary && (
+                    <div className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 overflow-y-auto no-print">
+                        <div className="max-w-3xl w-full">
+                            <div className="flex justify-end mb-4">
+                                <button onClick={() => setShowSummary(false)} className="text-white/40 hover:text-white font-black uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all">
+                                    <span className="text-lg">✕</span> CLOSE SUMMARY
+                                </button>
+                            </div>
+                            
+                            {/* BROADCAST CARD */}
+                            <div className="bg-gradient-to-b from-stone-400 via-stone-100 to-stone-400 rounded-xl overflow-hidden shadow-[0_0_150px_rgba(255,255,255,0.15)] border-t border-white/50 relative">
+                                {/* CARD HEADER */}
+                                <div className="bg-gradient-to-r from-[#1e293b] via-[#334155] to-[#1e293b] p-6 text-center border-b-4 border-stone-400">
+                                    <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter drop-shadow-lg">Match Summary</h2>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.5em] mt-2">Turf Score Pro Broadcast Series</p>
+                                </div>
+
+                                <div className="p-1.5 space-y-1.5">
+                                    {/* INNINGS 1 BLOCK */}
+                                    <div className="bg-stone-200/50">
+                                        <div className="flex items-center bg-gradient-to-r from-amber-500 to-yellow-400 p-4 border-b-2 border-stone-400">
+                                            <div className="flex-1">
+                                                <h3 className="text-2xl font-black italic text-slate-900 uppercase leading-none">{match.teamA.name}</h3>
+                                                <span className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Innings 1 Completed</span>
+                                            </div>
+                                            <div className="bg-slate-950 text-white px-8 py-3 rounded-xl shadow-2xl border border-white/10">
+                                                <h4 className="text-4xl font-black italic leading-none">{(match.firstInningsData?.score || match.score)}-{(match.firstInningsData?.wickets || match.wickets)}</h4>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-[3px] bg-stone-400">
+                                            <div className="bg-stone-50 p-5 space-y-4">
+                                                {/* Top 3 Batsmen Innings 1 */}
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-stone-200 pb-2">Leading Batters</p>
+                                                {(match.firstInningsData?.batsmanStats || match.batsmanStats || []).sort((a,b) => b.runs - a.runs).slice(0,3).map((b, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center group">
+                                                        <span className="text-xs font-black uppercase italic text-slate-800 group-hover:text-amber-600 transition-colors">{b.name}</span>
+                                                        <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 px-4 py-1 rounded-lg font-black italic text-xs shadow-sm">{b.runs} ({b.balls})</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="bg-stone-50 p-5 space-y-4">
+                                                {/* Top 3 Bowlers Innings 1 */}
+                                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-stone-200 pb-2">Top Wicket Takers</p>
+                                                {(match.firstInningsData?.bowlerStats || match.bowlerStats || []).sort((a,b) => b.wickets !== a.wickets ? b.wickets - a.wickets : a.runs - b.runs).slice(0,3).map((b, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center group">
+                                                        <span className="text-xs font-black uppercase italic text-slate-800 group-hover:text-slate-500 transition-colors">{b.name}</span>
+                                                        <span className="bg-slate-900 text-white px-4 py-1 rounded-lg font-black italic text-xs shadow-md">{b.wickets}-{b.runs}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* INNINGS 2 BLOCK */}
+                                    {(match.innings === 2 || match.firstInningsData) && (
+                                        <div className="bg-stone-200/50">
+                                            <div className="flex items-center bg-gradient-to-r from-rose-600 to-red-500 p-4 border-y-2 border-stone-400">
+                                                <div className="flex-1">
+                                                    <h3 className="text-2xl font-black italic text-white uppercase leading-none">{match.teamB.name}</h3>
+                                                    <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest">Innings 2 Result</span>
+                                                </div>
+                                                <div className="bg-slate-950 text-white px-8 py-3 rounded-xl shadow-2xl border border-white/10">
+                                                    <h4 className="text-4xl font-black italic leading-none">{match.innings === 2 ? match.score : match.firstInningsData?.score}-{match.innings === 2 ? match.wickets : match.firstInningsData?.wickets}</h4>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-[3px] bg-stone-400">
+                                                <div className="bg-stone-50 p-5 space-y-4">
+                                                    {/* Top 3 Batsmen Innings 2 */}
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-stone-200 pb-2">Leading Batters</p>
+                                                    {(match.innings === 2 ? match.batsmanStats || [] : []).sort((a,b) => b.runs - a.runs).slice(0,3).map((b, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center group">
+                                                            <span className="text-xs font-black uppercase italic text-slate-800 group-hover:text-red-600 transition-colors">{b.name}</span>
+                                                            <span className="bg-gradient-to-r from-red-600 to-rose-500 text-white px-4 py-1 rounded-lg font-black italic text-xs shadow-sm">{b.runs} ({b.balls})</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="bg-stone-50 p-5 space-y-4">
+                                                    {/* Top 3 Bowlers Innings 2 */}
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest border-b border-stone-200 pb-2">Top Wicket Takers</p>
+                                                    {(match.innings === 2 ? match.bowlerStats || [] : []).sort((a,b) => b.wickets !== a.wickets ? b.wickets - a.wickets : a.runs - b.runs).slice(0,3).map((b, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center group">
+                                                            <span className="text-xs font-black uppercase italic text-slate-800 group-hover:text-slate-500 transition-colors">{b.name}</span>
+                                                            <span className="bg-slate-900 text-white px-4 py-1 rounded-lg font-black italic text-xs shadow-md">{b.wickets}-{b.runs}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* CARD FOOTER (RESULT) */}
+                                <div className="bg-gradient-to-r from-stone-200 via-white to-stone-200 p-6 text-center border-t-4 border-stone-400 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-red-600/5 animate-pulse"></div>
+                                    <h5 className="text-2xl font-black italic uppercase text-slate-950 tracking-tighter relative z-10">{match.result}</h5>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 grid grid-cols-2 gap-4">
+                                <button 
+                                    onClick={downloadReport}
+                                    className="py-5 bg-white/10 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-3"
+                                >
+                                    💾 Save Image
+                                </button>
+                                <button 
+                                    onClick={() => navigate('/home')}
+                                    className="py-5 bg-emerald-600 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-xl shadow-emerald-600/20 hover:scale-105 transition-all"
+                                >
+                                    Next Match ➔
+                                </button>
                             </div>
                         </div>
                     </div>

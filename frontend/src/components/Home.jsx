@@ -103,19 +103,22 @@ const Home = () => {
                         <p className="text-[10px] text-red-600 font-mono mt-1 tracking-[0.2em] uppercase opacity-70">View Your Stats ➔</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md p-1 rounded-2xl border border-red-900/10 no-print">
-                    <button 
-                        onClick={() => handleModeToggle('AI')}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'AI' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500'}`}
-                    >
-                        AI Voice
-                    </button>
-                    <button 
-                        onClick={() => handleModeToggle('DIAL')}
-                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'DIAL' ? 'bg-purple-900 text-white shadow-lg' : 'text-slate-500'}`}
-                    >
-                        🎬 Dialogues
-                    </button>
+                <div className="flex items-center gap-3 bg-white/70 backdrop-blur-xl p-1.5 rounded-2xl border border-red-900/10 shadow-sm no-print">
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-2 hidden md:block">Commentary</span>
+                    <div className="flex gap-1">
+                        <button 
+                            onClick={() => handleModeToggle('AI')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'AI' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            AI Voice
+                        </button>
+                        <button 
+                            onClick={() => handleModeToggle('DIAL')}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${commentaryMode === 'DIAL' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            🎬 Dialogues
+                        </button>
+                    </div>
                 </div>
                 <button
                     onClick={() => { localStorage.clear(); navigate('/'); }}
@@ -133,11 +136,17 @@ const Home = () => {
             {/* Main Action Card */}
             <div
                 onClick={() => navigate('/create-match')}
-                className="relative overflow-hidden bg-red-600 group rounded-[2.5rem] p-8 h-48 flex flex-col justify-end cursor-pointer shadow-2xl shadow-red-600/20 hover:scale-[0.98] transition-all duration-300 mb-6"
+                className="relative overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-900 group rounded-[2.5rem] p-10 h-56 flex flex-col justify-end cursor-pointer shadow-2xl shadow-red-900/40 hover:scale-[0.99] transition-all duration-500 mb-8 border-b-4 border-black/20"
             >
-                <div className="z-10">
-                    <span className="bg-white/20 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Host Match</span>
-                    <h2 className="text-4xl font-black text-white leading-none mt-2 uppercase italic">Start New<br />Match</h2>
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity rotate-12 scale-150">
+                    <svg width="200" height="200" viewBox="0 0 100 100" fill="white"><path d="M50 5L95 95H5L50 5Z" /></svg>
+                </div>
+                <div className="z-10 relative">
+                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.3em] mb-4">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span> Host Arena
+                    </div>
+                    <h2 className="text-5xl font-black text-white leading-[0.9] uppercase italic tracking-tighter">Start New<br /><span className="text-white/60">Championship</span></h2>
+                    <p className="mt-4 text-[10px] font-bold text-white/50 uppercase tracking-[0.4em]">Initialize digital scorekeeping ➔</p>
                 </div>
             </div>
 
