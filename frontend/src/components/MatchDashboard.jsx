@@ -132,7 +132,8 @@ const MatchDashboard = () => {
     const [history, setHistory] = useState([]);
     const [activeTab, setActiveTab] = useState('LIVE');
     const [pinnedIPL, setPinnedIPL] = useState(null);
-    const [commentaryMode, setCommentaryMode] = useState(localStorage.getItem('commentaryMode') || 'AI');
+    const [commentaryMode, setCommentaryMode] = useState(() => localStorage.getItem('commentaryMode') || 'AI');
+    const [soundMuted, setSoundMuted] = useState(() => localStorage.getItem('soundMuted') === 'true');
 
     // Pre-load voices for macOS/Chrome bug
     useEffect(() => {
@@ -1042,7 +1043,7 @@ const MatchDashboard = () => {
                 <div ref={scorecardRef} className="max-w-4xl mx-auto bg-stone-50 p-2 rounded-3xl relative">
                     
                     {/* TOP NAVIGATION TABS */}
-                    <div className="flex gap-2 p-2 bg-stone-100 rounded-3xl mb-6 no-print">
+                    <div className="flex gap-2 p-2 bg-stone-100 rounded-3xl mb-6 no-print items-center">
                         <button 
                             className="flex-1 py-3 bg-white shadow-sm rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-600"
                         >
@@ -1056,6 +1057,16 @@ const MatchDashboard = () => {
                             className="flex-1 py-3 hover:bg-white/50 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 flex items-center justify-center gap-2"
                         >
                             Crazy Questions {match.polls?.length > 0 && <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>}
+                        </button>
+                        <button 
+                            onClick={() => {
+                                const newVal = !soundMuted;
+                                setSoundMuted(newVal);
+                                localStorage.setItem('soundMuted', newVal);
+                            }}
+                            className={`p-3 rounded-2xl transition-all ${soundMuted ? 'bg-slate-200 text-slate-400' : 'bg-white text-red-600 shadow-sm'}`}
+                        >
+                            {soundMuted ? '🔇' : '🔊'}
                         </button>
                     </div>
 
