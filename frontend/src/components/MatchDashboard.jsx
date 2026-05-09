@@ -185,30 +185,8 @@ const MatchDashboard = () => {
             if (!data.text) return;
             setCommentary(data.text);
 
-            const mode = localStorage.getItem('commentaryMode') || 'AI';
-            if (mode !== 'AI') return; // Skip AI Voice if Dialogues are active
-
-            // 🔊 VOICE FEATURE: Speak the commentary
-            if ('speechSynthesis' in window) {
-                const speech = new SpeechSynthesisUtterance(data.text);
-                speech.rate = 1.15; // Slightly faster for excitement
-                speech.pitch = 1.1;
-
-                // Try to find a good voice
-                const voices = window.speechSynthesis.getVoices();
-                // Prefer Indian, UK Male, or energetic voices
-                const preferredVoices = ['Google UK English Male', 'Daniel', 'Rishi', 'Alex', 'Samantha'];
-                let selectedVoice = voices.find(v => preferredVoices.includes(v.name));
-                if (!selectedVoice) {
-                    selectedVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-IN'));
-                }
-                if (selectedVoice) {
-                    speech.voice = selectedVoice;
-                }
-
-                // Removed .cancel() as it causes silent failures on macOS Safari/Chrome
-                window.speechSynthesis.speak(speech);
-            }
+            // Use the centralized voice engine
+            speakCommentary(data.text);
 
             // Auto-clear text after 8 seconds
             setTimeout(() => setCommentary(""), 8000);

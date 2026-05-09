@@ -47,22 +47,35 @@ export const playEventSound = (type) => {
 };
 
 export const speakCommentary = (text) => {
-    // AI Voice is independent of sound effects (DIAL mode), but let's keep it respect the mute too
+    // Check if global sound is muted
     const isMuted = localStorage.getItem('soundMuted') === 'true';
     if (isMuted) return;
 
-    const mode = localStorage.getItem('commentaryMode') || 'AI';
-    if (mode !== 'AI') return;
-
+    // AI Voice can now work alongside DIAL mode or AI mode
+    // We only skip if explicitly disabled or some other condition
     if ('speechSynthesis' in window) {
+        // Cancel previous speech to keep it real-time
         window.speechSynthesis.cancel();
+
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 1.1;
+        utterance.rate = 1.15; // Snappier for excitement
         utterance.pitch = 1.0;
         
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Male'));
-        if (preferredVoice) utterance.voice = preferredVoice;
+        // Priority voices for a professional cricket feel
+        const preferredVoices = ['Google UK English Male', 'Daniel', 'Rishi', 'Alex', 'Samantha', 'Male'];
+        let selectedVoice = null;
+        
+        for (const name of preferredVoices) {
+            selectedVoice = voices.find(v => v.name.includes(name));
+            if (selectedVoice) break;
+        }
+
+        if (!selectedVoice) {
+            selectedVoice = voices.find(v => v.lang.includes('en-GB') || v.lang.includes('en-IN'));
+        }
+
+        if (selectedVoice) utterance.voice = selectedVoice;
 
         window.speechSynthesis.speak(utterance);
     }
