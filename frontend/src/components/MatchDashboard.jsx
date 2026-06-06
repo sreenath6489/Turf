@@ -153,6 +153,9 @@ const MatchDashboard = () => {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}`);
                 setMatch(res.data);
                 setViewInnings(res.data.innings);
+                if (res.data.isCompleted) {
+                    setActiveTab('BALL BY BALL');
+                }
                 socket.emit('joinMatch', id);
             } catch (err) {
                 alert("Match not found");
@@ -427,6 +430,9 @@ const MatchDashboard = () => {
         };
         newMatch.wickets += 1;
 
+        let outBatsman = wicketData.outBatsmanId === match.currentBatsmen.nonStriker?.tid ? match.currentBatsmen.nonStriker : match.currentBatsmen.striker;
+        let isStrikerOut = outBatsman.tid === match.currentBatsmen.striker?.tid;
+
         if (wicketData.type !== 'Retired') {
             newMatch.balls += 1;
             newMatch.currentBatsmen.striker.balls += 1;
@@ -436,11 +442,14 @@ const MatchDashboard = () => {
             }
         }
 
-        newMatch.score += wicketData.runs;
+        newMatch.score += wicketData.runs || 0;
 
         let ballStr = 'W';
-        if (wicketData.type === 'Run Out') ballStr = `W(${wicketData.runs}RO)`;
-        newMatch.ballHistory.push(ballStr);
+        if (wicketData.type === 'Run Out') ballStr = `W(${wicketData.runs || 0}RO)`;
+        
+        if (wicketData.type !== 'Retired') {
+            newMatch.ballHistory.push(ballStr);
+        }
 
         let dismissalStr = wicketData.type;
         if (wicketData.type === 'Run Out' || wicketData.type === 'Caught' || wicketData.type === 'Stumped') {
@@ -452,37 +461,51 @@ const MatchDashboard = () => {
         }
 
         newMatch.batsmanStats.push({
-            ...newMatch.currentBatsmen.striker,
+            ...outBatsman,
             dismissal: dismissalStr
         });
 
         if (!isLastWicket) {
             if (match.wickets === match.battingTeam.players.length - 2) {
                 // This was the 2nd to last wicket. One player is left.
-                // Move the non-striker to striker for solo play.
-                newMatch.currentBatsmen.striker = { ...newMatch.currentBatsmen.nonStriker };
-                newMatch.currentBatsmen.nonStriker = null;
+                // Move the non-striker to striker for solo play if needed.
+                if (isStrikerOut) {
+                    newMatch.currentBatsmen.striker = { ...newMatch.currentBatsmen.nonStriker };
+                    newMatch.currentBatsmen.nonStriker = null;
+                } else {
+                    newMatch.currentBatsmen.nonStriker = null;
+                }
             } else {
-                newMatch.currentBatsmen.striker = {
-                    ...wicketData.nextBatsman,
-                    runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
-                };
+                if (isStrikerOut) {
+                    newMatch.currentBatsmen.striker = {
+                        ...wicketData.nextBatsman,
+                        runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
+                    };
+                } else {
+                    newMatch.currentBatsmen.nonStriker = {
+                        ...wicketData.nextBatsman,
+                        runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
+                    };
+                }
             }
         } else {
-            newMatch.currentBatsmen.striker = null;
+            if (isStrikerOut) newMatch.currentBatsmen.striker = null;
+            else newMatch.currentBatsmen.nonStriker = null;
         }
 
-        if (wicketData.runs % 2 !== 0 && !isLastWicket) {
+        if ((wicketData.runs || 0) % 2 !== 0 && !isLastWicket) {
             rotateStrike(newMatch);
         }
 
-        if (match.currentBatsmen.striker.runs === 0) {
+        if (outBatsman.runs === 0 && wicketData.type !== 'Retired') {
             triggerSpecial('DUCK');
         }
 
         checkInningsStatus(newMatch);
-        playEventSound('wicket');
-        syncMatch(newMatch, { runs: wicketData.runs, type: 'wicket', description: `WICKET! ${dismissalStr}` });
+        if (wicketData.type !== 'Retired') {
+            playEventSound('wicket');
+        }
+        syncMatch(newMatch, { runs: wicketData.runs || 0, type: 'wicket', description: `WICKET! ${dismissalStr}` });
     };
 
     const handleBowlerSubmit = () => {
@@ -533,7 +556,7 @@ const MatchDashboard = () => {
             const elementsToHide = document.querySelectorAll('.no-print');
             elementsToHide.forEach(el => el.style.display = 'none');
 
-            const dataUrl = await toPng(scorecardRef.current, { cacheBust: true, backgroundColor: '#020617' });
+            const dataUrl = await toPng(scorecardRef.current, { cacheBust: true, backgroundColor: '#FAF4EA' });
 
             const link = document.createElement('a');
             link.download = `Turf_Match_Report_${match.teamA.name}_vs_${match.teamB.name}.png`;
@@ -823,121 +846,180 @@ const MatchDashboard = () => {
     };
 
     const renderFullScorecard = () => {
-        let dataToRender = viewInnings === 1 && match.firstInningsData ? match.firstInningsData : match;
+    const renderInningsScorecard = (dataToRender, isFirstInnings) => {
+        if (!dataToRender) return null;
 
-            // Combine all batted players + current
-            let allBatsmen = [...(dataToRender.batsmanStats || [])];
-            if (dataToRender.currentBatsmen?.striker) allBatsmen.push({ ...dataToRender.currentBatsmen.striker, dismissal: 'not out' });
-            if (dataToRender.currentBatsmen?.nonStriker) allBatsmen.push({ ...dataToRender.currentBatsmen.nonStriker, dismissal: 'not out' });
+        let allBatsmen = [...(dataToRender.batsmanStats || [])];
+        if (dataToRender.currentBatsmen?.striker) allBatsmen.push({ ...dataToRender.currentBatsmen.striker, dismissal: 'not out' });
+        if (dataToRender.currentBatsmen?.nonStriker) allBatsmen.push({ ...dataToRender.currentBatsmen.nonStriker, dismissal: 'not out' });
 
-            // Yet to bat
-            const battedIds = allBatsmen.map(b => b.tid);
-            const currentBattingTeam = viewInnings === 1 ? (match.innings === 1 ? match.battingTeam : match.bowlingTeam) : match.battingTeam;
-            const yetToBat = currentBattingTeam.players.filter(p => !battedIds.includes(p.tid));
+        const battedIds = allBatsmen.map(b => b.tid);
+        const currentBattingTeam = isFirstInnings ? (match.innings === 1 ? match.battingTeam : match.bowlingTeam) : match.battingTeam;
+        const yetToBat = currentBattingTeam.players.filter(p => !battedIds.includes(p.tid));
 
-            // Combine all bowlers
-            let allBowlers = [...(dataToRender.bowlerStats || [])];
-            if (dataToRender.currentBowler && dataToRender.currentBowler.balls > 0) {
-                const existing = allBowlers.findIndex(b => b.tid === dataToRender.currentBowler.tid);
-                if (existing >= 0) allBowlers[existing] = dataToRender.currentBowler;
-                else allBowlers.push(dataToRender.currentBowler);
+        let allBowlers = [...(dataToRender.bowlerStats || [])];
+        if (dataToRender.currentBowler && dataToRender.currentBowler.balls > 0) {
+            const existing = allBowlers.findIndex(b => b.tid === dataToRender.currentBowler.tid);
+            if (existing >= 0) allBowlers[existing] = dataToRender.currentBowler;
+            else allBowlers.push(dataToRender.currentBowler);
+        }
+
+        const ext = dataToRender.extras || { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+        const totalExtras = ext.wides + ext.noBalls + ext.byes + ext.legByes;
+
+        return (
+            <div className="bg-white border border-red-900/10 rounded-3xl overflow-hidden mt-6 shadow-md">
+                <div className="p-4 border-b border-red-900/10 flex justify-between bg-red-50 items-center">
+                    <h3 className="font-black text-sm text-red-600 uppercase tracking-[0.2em]">Batting</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead>
+                            <tr className="text-slate-500 text-[10px] uppercase border-b border-red-900/10 bg-stone-50">
+                                <th className="p-3 font-bold w-1/2">Batter</th>
+                                <th className="p-3 text-right font-black w-10">R</th>
+                                <th className="p-3 text-right font-black w-10">B</th>
+                                <th className="p-3 text-right font-bold w-10">4s</th>
+                                <th className="p-3 text-right font-bold w-10">6s</th>
+                                <th className="p-3 text-right font-bold w-16">SR</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-red-900/10">
+                            {allBatsmen.map((b, i) => (
+                                <tr key={i} className="hover:bg-red-50 transition-colors">
+                                    <td className="p-3">
+                                        <p className={`font-bold ${b.dismissal === 'not out' ? 'text-red-600' : 'text-slate-700'}`}>{b.name}</p>
+                                        <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{b.dismissal || 'not out'}</p>
+                                    </td>
+                                    <td className="p-3 text-right font-black text-slate-900">{b.runs}</td>
+                                    <td className="p-3 text-right font-bold text-slate-400">{b.balls}</td>
+                                    <td className="p-3 text-right text-slate-400">{b.fours}</td>
+                                    <td className="p-3 text-right text-slate-400">{b.sixes}</td>
+                                    <td className="p-3 text-right text-slate-400 font-mono">{getStrikeRate(b.runs, b.balls)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="p-4 border-t border-red-900/10 bg-stone-50 flex justify-between items-center">
+                    <span className="font-bold text-sm text-slate-500">Extras</span>
+                    <span className="font-bold text-sm text-slate-900">{totalExtras} <span className="text-xs font-normal text-slate-500">(W {ext.wides}, NB {ext.noBalls}, B {ext.byes}, LB {ext.legByes})</span></span>
+                </div>
+                <div className="p-4 border-t border-red-900/10 bg-stone-100 flex justify-between items-center">
+                    <span className="font-black text-lg text-slate-900">Total</span>
+                    <span className="font-black text-lg text-slate-900">{dataToRender.score} <span className="text-xs font-normal text-slate-500">({dataToRender.wickets} wkts, {formatOvers(dataToRender.balls)} ov)</span></span>
+                </div>
+
+                {yetToBat.length > 0 && (
+                    <div className="p-4 border-t border-red-900/10 bg-stone-50">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Yet to bat</p>
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                            {yetToBat.map(p => p.name).join(' • ')}
+                        </p>
+                    </div>
+                )}
+
+                <div className="p-4 border-y border-red-900/10 flex justify-between bg-red-50 mt-4 items-center">
+                    <h3 className="font-black text-sm text-red-600 uppercase tracking-[0.2em]">Bowling</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead>
+                            <tr className="text-slate-500 text-[10px] uppercase border-b border-red-900/10 bg-stone-50">
+                                <th className="p-3 font-bold w-1/2">Bowler</th>
+                                <th className="p-3 text-right font-bold w-10">O</th>
+                                <th className="p-3 text-right font-bold w-10">M</th>
+                                <th className="p-3 text-right font-black w-10">R</th>
+                                <th className="p-3 text-right font-black w-10 text-slate-900">W</th>
+                                <th className="p-3 text-right font-bold w-16">Econ</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-red-900/10">
+                            {allBowlers.map((b, i) => (
+                                <tr key={i} className="hover:bg-red-50 transition-colors">
+                                    <td className="p-3 font-bold text-slate-700">{b.name}</td>
+                                    <td className="p-3 text-right text-slate-500">{formatOvers(b.balls)}</td>
+                                    <td className="p-3 text-right text-slate-500">{b.maidens || 0}</td>
+                                    <td className="p-3 text-right font-black text-slate-900">{b.runs}</td>
+                                    <td className="p-3 text-right font-black text-red-600">{b.wickets}</td>
+                                    <td className="p-3 text-right text-slate-400 font-mono">{getEcon(b.runs, b.balls)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+        let bestBatsman = null;
+        let bestBowler = null;
+        let bestFielder = null;
+        
+        if (match.isCompleted) {
+            let allBatters = [];
+            let allBowlersAwards = [];
+            let fielderCounts = {};
+
+            const processInnings = (innData) => {
+                if (!innData) return;
+                let stats = [...(innData.batsmanStats || [])];
+                if (innData.currentBatsmen?.striker) stats.push({...innData.currentBatsmen.striker});
+                if (innData.currentBatsmen?.nonStriker) stats.push({...innData.currentBatsmen.nonStriker});
+                allBatters = [...allBatters, ...stats];
+
+                let bStats = [...(innData.bowlerStats || [])];
+                if (innData.currentBowler && innData.currentBowler.balls > 0) bStats.push({...innData.currentBowler});
+                allBowlersAwards = [...allBowlersAwards, ...bStats];
+
+                stats.forEach(b => {
+                    if (b.dismissal) {
+                        if (b.dismissal.startsWith('c ')) {
+                            const parts = b.dismissal.split(' b ');
+                            const fielderName = parts[0].replace('c ', '').trim();
+                            if (fielderName) fielderCounts[fielderName] = (fielderCounts[fielderName] || 0) + 1;
+                        } else if (b.dismissal.startsWith('run out ')) {
+                            const parts = b.dismissal.split(' b ');
+                            const fielderName = parts[0].replace('run out ', '').trim();
+                            if (fielderName) fielderCounts[fielderName] = (fielderCounts[fielderName] || 0) + 1;
+                        }
+                    }
+                });
+            };
+
+            processInnings(match.innings === 2 ? match.firstInningsData : match);
+            if (match.innings === 2) processInnings(match);
+
+            if (allBatters.length > 0) {
+                allBatters.sort((a, b) => {
+                    if (b.runs !== a.runs) return b.runs - a.runs;
+                    const srA = a.balls > 0 ? a.runs/a.balls : 0;
+                    const srB = b.balls > 0 ? b.runs/b.balls : 0;
+                    return srB - srA;
+                });
+                bestBatsman = allBatters[0];
             }
 
-            const ext = dataToRender.extras || { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
-            const totalExtras = ext.wides + ext.noBalls + ext.byes + ext.legByes;
+            if (allBowlersAwards.length > 0) {
+                allBowlersAwards.sort((a, b) => {
+                    if (b.wickets !== a.wickets) return b.wickets - a.wickets;
+                    if (a.runs !== b.runs) return a.runs - b.runs;
+                    const erA = a.balls > 0 ? a.runs/(a.balls/6) : 0;
+                    const erB = b.balls > 0 ? b.runs/(b.balls/6) : 0;
+                    return erA - erB;
+                });
+                bestBowler = allBowlersAwards[0];
+            }
 
-            const scorecardContent = (
-                <div className="bg-white border border-red-900/10 rounded-3xl overflow-hidden mt-8 shadow-md">
-                    {/* Batting Header */}
-                    <div className="p-4 border-b border-red-900/10 flex justify-between bg-red-50 items-center">
-                        <h3 className="font-black text-sm text-red-600 uppercase tracking-[0.2em]">Batting</h3>
-                    </div>
-
-                    {/* Batting Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead>
-                                <tr className="text-slate-500 text-[10px] uppercase border-b border-red-900/10 bg-stone-50">
-                                    <th className="p-3 font-bold w-1/2">Batter</th>
-                                    <th className="p-3 text-right font-black w-10">R</th>
-                                    <th className="p-3 text-right font-black w-10">B</th>
-                                    <th className="p-3 text-right font-bold w-10">4s</th>
-                                    <th className="p-3 text-right font-bold w-10">6s</th>
-                                    <th className="p-3 text-right font-bold w-16">SR</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-red-900/10">
-                                {allBatsmen.map((b, i) => (
-                                    <tr key={i} className="hover:bg-red-50 transition-colors">
-                                        <td className="p-3">
-                                            <p className={`font-bold ${b.dismissal === 'not out' ? 'text-red-600' : 'text-slate-700'}`}>{b.name}</p>
-                                            <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">{b.dismissal || 'not out'}</p>
-                                        </td>
-                                        <td className="p-3 text-right font-black text-slate-900">{b.runs}</td>
-                                        <td className="p-3 text-right font-bold text-slate-400">{b.balls}</td>
-                                        <td className="p-3 text-right text-slate-400">{b.fours}</td>
-                                        <td className="p-3 text-right text-slate-400">{b.sixes}</td>
-                                        <td className="p-3 text-right text-slate-400 font-mono">{getStrikeRate(b.runs, b.balls)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Extras & Totals */}
-                    <div className="p-4 border-t border-red-900/10 bg-stone-50 flex justify-between items-center">
-                        <span className="font-bold text-sm text-slate-500">Extras</span>
-                        <span className="font-bold text-sm text-slate-900">{totalExtras} <span className="text-xs font-normal text-slate-500">(W {ext.wides}, NB {ext.noBalls}, B {ext.byes}, LB {ext.legByes})</span></span>
-                    </div>
-                    <div className="p-4 border-t border-red-900/10 bg-stone-100 flex justify-between items-center">
-                        <span className="font-black text-lg text-slate-900">Total</span>
-                        <span className="font-black text-lg text-slate-900">{dataToRender.score} <span className="text-xs font-normal text-slate-500">({dataToRender.wickets} wkts, {formatOvers(dataToRender.balls)} ov)</span></span>
-                    </div>
-
-                    {/* Yet to Bat */}
-                    {yetToBat.length > 0 && (
-                        <div className="p-4 border-t border-red-900/10 bg-stone-50">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Yet to bat</p>
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                                {yetToBat.map(p => p.name).join(' • ')}
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Bowling Header */}
-                    <div className="p-4 border-y border-red-900/10 flex justify-between bg-red-50 mt-4 items-center">
-                        <h3 className="font-black text-sm text-red-600 uppercase tracking-[0.2em]">Bowling</h3>
-                    </div>
-
-                    {/* Bowling Table */}
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm whitespace-nowrap">
-                            <thead>
-                                <tr className="text-slate-500 text-[10px] uppercase border-b border-red-900/10 bg-stone-50">
-                                    <th className="p-3 font-bold w-1/2">Bowler</th>
-                                    <th className="p-3 text-right font-bold w-10">O</th>
-                                    <th className="p-3 text-right font-bold w-10">M</th>
-                                    <th className="p-3 text-right font-black w-10">R</th>
-                                    <th className="p-3 text-right font-black w-10 text-slate-900">W</th>
-                                    <th className="p-3 text-right font-bold w-16">Econ</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-red-900/10">
-                                {allBowlers.map((b, i) => (
-                                    <tr key={i} className="hover:bg-red-50 transition-colors">
-                                        <td className="p-3 font-bold text-slate-700">{b.name}</td>
-                                        <td className="p-3 text-right text-slate-500">{formatOvers(b.balls)}</td>
-                                        <td className="p-3 text-right text-slate-500">{b.maidens || 0}</td>
-                                        <td className="p-3 text-right font-black text-slate-900">{b.runs}</td>
-                                        <td className="p-3 text-right font-black text-red-600">{b.wickets}</td>
-                                        <td className="p-3 text-right text-slate-400 font-mono">{getEcon(b.runs, b.balls)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            );
+            let maxCatches = 0;
+            let topFielder = null;
+            Object.keys(fielderCounts).forEach(f => {
+                if (fielderCounts[f] > maxCatches) {
+                    maxCatches = fielderCounts[f];
+                    topFielder = f;
+                }
+            });
+            if (topFielder) bestFielder = { name: topFielder, dismissals: maxCatches };
+        }
 
             return (
         <div className="min-h-screen bg-[#FAF4EA] text-slate-900 font-sans flex flex-col items-center p-4 md:p-8">
@@ -1102,8 +1184,62 @@ const MatchDashboard = () => {
                         </div>
                     )}
                     {activeTab === 'BALL BY BALL' && (
-                        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-red-900/5 mt-6">
-                            {renderBallHistory()}
+                        <div className="flex flex-col gap-6 w-full" ref={scorecardRef}>
+                            {match.innings === 2 && match.firstInningsData && (
+                                <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-red-900/5">
+                                    <h2 className="text-2xl font-black italic uppercase text-slate-900 mb-2 text-center tracking-widest">{match.firstInningsData.battingTeam.name} Innings</h2>
+                                    {renderInningsScorecard(match.firstInningsData, true)}
+                                </div>
+                            )}
+                            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-red-900/5">
+                                <h2 className="text-2xl font-black italic uppercase text-slate-900 mb-2 text-center tracking-widest">{match.battingTeam?.name} Innings</h2>
+                                {renderInningsScorecard(match, false)}
+                                {renderBallHistory()}
+                            </div>
+                            
+                            {match.isCompleted && (
+                                <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-red-900/5">
+                                    <h2 className="text-2xl font-black italic uppercase text-red-600 mb-6 text-center tracking-widest">Match Awards 🏆</h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {bestBatsman && (
+                                            <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100 flex flex-col items-center text-center">
+                                                <span className="text-4xl mb-2">🏏</span>
+                                                <h3 className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1">Best Batsman</h3>
+                                                <p className="font-black text-lg text-slate-900">{bestBatsman.name}</p>
+                                                <p className="text-xs font-bold text-slate-500 mt-2">{bestBatsman.runs} ({bestBatsman.balls}) • SR: {(bestBatsman.balls > 0 ? (bestBatsman.runs/bestBatsman.balls)*100 : 0).toFixed(1)}</p>
+                                            </div>
+                                        )}
+                                        {bestBowler && (
+                                            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 flex flex-col items-center text-center">
+                                                <span className="text-4xl mb-2">🎯</span>
+                                                <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Best Bowler</h3>
+                                                <p className="font-black text-lg text-slate-900">{bestBowler.name}</p>
+                                                <p className="text-xs font-bold text-slate-500 mt-2">{bestBowler.wickets}/{bestBowler.runs} • ER: {(bestBowler.balls > 0 ? bestBowler.runs/(bestBowler.balls/6) : 0).toFixed(1)}</p>
+                                            </div>
+                                        )}
+                                        {bestFielder ? (
+                                            <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex flex-col items-center text-center">
+                                                <span className="text-4xl mb-2">🧤</span>
+                                                <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Best Fielder</h3>
+                                                <p className="font-black text-lg text-slate-900">{bestFielder.name}</p>
+                                                <p className="text-xs font-bold text-slate-500 mt-2">{bestFielder.dismissals} Dismissals</p>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-stone-50 rounded-2xl p-6 border border-stone-100 flex flex-col items-center text-center opacity-50">
+                                                <span className="text-4xl mb-2">🧤</span>
+                                                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Best Fielder</h3>
+                                                <p className="font-black text-sm text-slate-500">No catches</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {match.isCompleted && (
+                                <button onClick={downloadReport} className="no-print p-5 bg-red-600 text-white rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-red-600/30 w-full hover:bg-red-700 active:scale-95 transition-all text-sm mt-4">
+                                    Download Match Report
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
@@ -1219,6 +1355,15 @@ const MatchDashboard = () => {
                                 </div>
                             </div>
                         )}
+                        {['Run Out', 'Retired'].includes(wicketData.type) && match.currentBatsmen.nonStriker && (
+                            <div className="mb-6 bg-stone-50 p-4 rounded-2xl">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-3">Who is Out?</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => setWicketData({...wicketData, outBatsmanId: match.currentBatsmen.striker.tid})} className={`p-3 rounded-xl border-2 text-xs font-black transition-all ${(wicketData.outBatsmanId === match.currentBatsmen.striker.tid || !wicketData.outBatsmanId) ? 'border-red-600 bg-red-50 text-red-600' : 'border-slate-200 text-slate-600 bg-white hover:border-slate-300'}`}>{match.currentBatsmen.striker.name}</button>
+                                    <button onClick={() => setWicketData({...wicketData, outBatsmanId: match.currentBatsmen.nonStriker.tid})} className={`p-3 rounded-xl border-2 text-xs font-black transition-all ${wicketData.outBatsmanId === match.currentBatsmen.nonStriker.tid ? 'border-red-600 bg-red-50 text-red-600' : 'border-slate-200 text-slate-600 bg-white hover:border-slate-300'}`}>{match.currentBatsmen.nonStriker.name}</button>
+                                </div>
+                            </div>
+                        )}
                         {!isLastWicket && (
                             <div className="mb-8">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-3">Next Batsman</label>
@@ -1261,6 +1406,7 @@ const MatchDashboard = () => {
             {renderFullScorecard()}
         </div>
     );
+};
 };
 
 export default MatchDashboard;
