@@ -954,6 +954,7 @@ const MatchDashboard = () => {
         let bestBatsman = null;
         let bestBowler = null;
         let bestFielder = null;
+        let currentDataToRender = viewInnings === 1 && match.firstInningsData ? match.firstInningsData : match;
         
         if (match.isCompleted) {
             let allBatters = [];
@@ -1061,21 +1062,21 @@ const MatchDashboard = () => {
                                 <div className="flex justify-between items-start relative z-10">
                                     <div className="bg-white/5 border border-white/10 px-5 py-3 rounded-2xl backdrop-blur-sm">
                                         <p className="text-[8px] font-black uppercase tracking-widest text-purple-300 mb-1">Live Match</p>
-                                        <p className="text-sm font-black uppercase italic">{dataToRender.battingTeam?.name || 'Team'}, {dataToRender.innings || 1}{dataToRender.innings === 1 ? 'st' : 'nd'} inn</p>
+                                        <p className="text-sm font-black uppercase italic">{currentDataToRender.battingTeam?.name || 'Team'}, {currentDataToRender.innings || 1}{currentDataToRender.innings === 1 ? 'st' : 'nd'} inn</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-purple-300 mb-1">Overs</p>
-                                        <p className="text-2xl font-black italic">{formatOvers(dataToRender.balls)} <span className="text-sm text-purple-300">/ {match.overs}</span></p>
+                                        <p className="text-2xl font-black italic">{formatOvers(currentDataToRender.balls)} <span className="text-sm text-purple-300">/ {match.overs}</span></p>
                                     </div>
                                 </div>
 
                                 <div className="text-center my-12 relative z-10">
                                     <h1 className="text-8xl md:text-9xl font-black italic tracking-tighter flex items-end justify-center gap-2">
-                                        {dataToRender.score} <span className="text-4xl md:text-6xl text-purple-300">/{dataToRender.wickets}</span>
+                                        {currentDataToRender.score} <span className="text-4xl md:text-6xl text-purple-300">/{currentDataToRender.wickets}</span>
                                     </h1>
                                     <div className="inline-flex mt-6 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                                        <span className="text-xs font-black uppercase tracking-widest text-purple-200">CRR: {getEcon(dataToRender.score, dataToRender.balls)}</span>
+                                        <span className="text-xs font-black uppercase tracking-widest text-purple-200">CRR: {getEcon(currentDataToRender.score, currentDataToRender.balls)}</span>
                                     </div>
                                 </div>
                             </div>
