@@ -9,29 +9,30 @@ const CreateMatch = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [activeTeam, setActiveTeam] = useState('A'); 
     const [step, setStep] = useState(1); // 1: Setup, 2: Select Captains
+    const [isDoubleSided, setIsDoubleSided] = useState(false);
 
     const navigate = useNavigate();
 
-    const handleSearch = async (val) => {
-        setSearchQuery(val);
-        if (val.length > 2) {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/players/search?query=${val}`);
-            setSearchResults(res.data);
-        } else {
-            setSearchResults([]);
-        }
-    };
+    const addPlayer = () => {
+        if (!searchQuery.trim()) return;
+        
+        const newPlayer = {
+            tid: `TMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            name: searchQuery.trim() + (isDoubleSided ? ' (Double)' : ''),
+            role: 'Player',
+            profilePic: ''
+        };
 
-    const addPlayer = (player) => {
-        if (activeTeam === 'A') {
-            if (teamA.players.some(p => p.tid === player.tid)) return;
-            setTeamA({ ...teamA, players: [...teamA.players, player] });
+        if (isDoubleSided) {
+            setTeamA({ ...teamA, players: [...teamA.players, newPlayer] });
+            setTeamB({ ...teamB, players: [...teamB.players, newPlayer] });
+        } else if (activeTeam === 'A') {
+            setTeamA({ ...teamA, players: [...teamA.players, newPlayer] });
         } else {
-            if (teamB.players.some(p => p.tid === player.tid)) return;
-            setTeamB({ ...teamB, players: [...teamB.players, player] });
+            setTeamB({ ...teamB, players: [...teamB.players, newPlayer] });
         }
         setSearchQuery('');
-        setSearchResults([]);
+        setIsDoubleSided(false);
     };
 
     return (
@@ -101,30 +102,31 @@ const CreateMatch = () => {
                             </button>
                         </div>
                         
-                        <div className="relative flex-1 w-full max-w-md">
-                            <input
-                                value={searchQuery}
-                                onChange={(e) => handleSearch(e.target.value)}
-                                placeholder="Search Player by Name or TID..."
-                                className="w-full bg-white p-5 rounded-[1.5rem] outline-none border border-red-900/10 focus:ring-4 focus:ring-red-600/5 transition-all text-slate-900 font-bold shadow-sm"
-                            />
-                            {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-red-900/10 rounded-[1.5rem] overflow-hidden shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    {searchResults.map(p => (
-                                        <div
-                                            key={p.tid}
-                                            onClick={() => addPlayer(p)}
-                                            className="p-4 hover:bg-red-50 hover:text-red-600 cursor-pointer border-b border-stone-50 last:border-0 flex items-center gap-4 group"
-                                        >
-                                            <img src={p.profilePic} alt="" className="w-10 h-10 rounded-xl object-cover shadow-md group-hover:scale-110 transition-transform" />
-                                            <div>
-                                                <p className="font-black uppercase italic text-sm">{p.name}</p>
-                                                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{p.role} • {p.tid}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                        <div className="flex-1 w-full max-w-md flex flex-col gap-3">
+                            <div className="flex gap-2">
+                                <input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+                                    placeholder="Type player name..."
+                                    className="flex-1 bg-white p-5 rounded-[1.5rem] outline-none border border-red-900/10 focus:ring-4 focus:ring-red-600/5 transition-all text-slate-900 font-bold shadow-sm"
+                                />
+                                <button
+                                    onClick={addPlayer}
+                                    className="px-6 bg-red-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-lg hover:bg-red-700 transition-all"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                            <label className="flex items-center gap-2 cursor-pointer ml-2">
+                                <input 
+                                    type="checkbox" 
+                                    checked={isDoubleSided} 
+                                    onChange={(e) => setIsDoubleSided(e.target.checked)} 
+                                    className="w-4 h-4 accent-red-600"
+                                />
+                                <span className="text-xs font-black uppercase tracking-widest text-slate-500">Plays for BOTH Teams (Double Side)</span>
+                            </label>
                         </div>
                     </div>
 
