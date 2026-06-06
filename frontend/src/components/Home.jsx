@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
-import { fetchIPLMatches } from '../utils/iplservice.js';
-import IPLCard from './IPLCard';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
@@ -11,8 +9,6 @@ const Home = () => {
     const [user, setUser] = useState(null);
     const [liveMatches, setLiveMatches] = useState([]);
     const [history, setHistory] = useState([]);
-    const [iplMatches, setIplMatches] = useState([]);
-    const [pinnedMatch, setPinnedMatch] = useState(null);
     const [commentaryMode, setCommentaryMode] = useState(localStorage.getItem('commentaryMode') || 'AI');
     const navigate = useNavigate();
 
@@ -43,17 +39,8 @@ const Home = () => {
             }
         };
 
-        const fetchIPL = async () => {
-            const data = await fetchIPLMatches();
-            setIplMatches(data);
-        };
-
-        const savedPin = localStorage.getItem('pinnedIPLMatch');
-        if (savedPin) setPinnedMatch(JSON.parse(savedPin));
-
         fetchLiveMatches();
         fetchHistory();
-        fetchIPL();
 
         socket.on('scoreUpdated', (updatedMatch) => {
             setLiveMatches(prev =>
@@ -67,16 +54,6 @@ const Home = () => {
     const handleModeToggle = (mode) => {
         setCommentaryMode(mode);
         localStorage.setItem('commentaryMode', mode);
-    };
-
-    const togglePin = (match) => {
-        if (pinnedMatch?.id === match.id) {
-            setPinnedMatch(null);
-            localStorage.removeItem('pinnedIPLMatch');
-        } else {
-            setPinnedMatch(match);
-            localStorage.setItem('pinnedIPLMatch', JSON.stringify(match));
-        }
     };
 
     if (!user) return null;
@@ -130,9 +107,6 @@ const Home = () => {
                 </button>
             </div>
 
-            {/* LIVE IPL SCORECARD (GLASSMORPHISM) */}
-            <IPLCard />
-
             {/* Main Action Card */}
             <div
                 onClick={() => navigate('/create-match')}
@@ -147,51 +121,6 @@ const Home = () => {
                     </div>
                     <h2 className="text-5xl font-black text-white leading-[0.9] uppercase italic tracking-tighter">Start New<br /><span className="text-white/60">Championship</span></h2>
                     <p className="mt-4 text-[10px] font-bold text-white/50 uppercase tracking-[0.4em]">Initialize digital scorekeeping ➔</p>
-                </div>
-            </div>
-
-            {/* LIVE IPL SECTION */}
-            <div className="mt-4 mb-10 overflow-x-auto no-scrollbar pb-4 -mx-2 px-2">
-                <div className="flex justify-between items-center mb-4 px-2">
-                    <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-yellow-500 rounded-full"></span> Live IPL Scores
-                    </h3>
-                </div>
-                <div className="flex gap-4 min-w-max">
-                    {iplMatches.map((match) => (
-                        <div key={match.id} className="w-72 bg-[#1a1a1a] rounded-[2rem] p-5 text-white shadow-xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); togglePin(match); }}
-                                    className={`p-2 rounded-full backdrop-blur-md border ${pinnedMatch?.id === match.id ? 'bg-yellow-500 border-yellow-400' : 'bg-white/10 border-white/20'}`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill={pinnedMatch?.id === match.id ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="flex justify-between items-center mb-4">
-                                <span className="text-[10px] font-black tracking-widest text-white/40 uppercase">IPL 2025</span>
-                                <span className={`text-[8px] font-black px-2 py-0.5 rounded border ${match.status === 'LIVE' ? 'bg-red-600 border-red-500 animate-pulse' : 'bg-white/10 border-white/20 opacity-50'}`}>
-                                    {match.status}
-                                </span>
-                            </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-lg font-black italic">{match.teamA}</span>
-                                    <span className="text-lg font-black text-white/50">{match.scoreA}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-lg font-black italic">{match.teamB}</span>
-                                    <span className="text-lg font-black">{match.scoreB}</span>
-                                </div>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center text-[10px] font-bold text-white/40">
-                                <span>{match.overs} Overs</span>
-                                <span className="truncate max-w-[120px]">{match.venue}</span>
-                            </div>
-                        </div>
-                    ))}
                 </div>
             </div>
 
