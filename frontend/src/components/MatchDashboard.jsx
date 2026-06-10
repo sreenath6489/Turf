@@ -1353,16 +1353,14 @@ const MatchDashboard = () => {
                                                     {r}
                                                 </button>
                                             ))}
-                                            <button onClick={() => handleRun(5)} className="flex-1 min-w-[2.5rem] py-4 bg-white border-2 border-slate-100 rounded-xl text-xs font-black text-slate-400 hover:border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">5</button>
-                                            <button onClick={() => handleRun(7)} className="flex-1 min-w-[2.5rem] py-4 bg-white border-2 border-slate-100 rounded-xl text-xs font-black text-slate-400 hover:border-slate-300 hover:bg-slate-50 active:scale-95 transition-all shadow-sm">7</button>
                                         </div>
                                         
-                                        {/* Quick Extras Row */}
+                                        {/* Extras & Wicket Row */}
                                         <div className="flex flex-wrap gap-2 mb-2">
-                                            <button onClick={() => handleWideSubmit(0)} className="flex-1 min-w-[3.5rem] py-3 bg-orange-50 border-2 border-orange-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-100 active:scale-95 transition-all">Wd</button>
-                                            <button onClick={() => handleNoBallSubmit(0, 'Bat')} className="flex-1 min-w-[3.5rem] py-3 bg-orange-50 border-2 border-orange-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-100 active:scale-95 transition-all">NB</button>
-                                            <button onClick={() => setActiveModal('WIDE')} className="flex-1 min-w-[2.5rem] py-3 bg-stone-50 border-2 border-stone-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-stone-100 active:scale-95 transition-all">Wd+</button>
-                                            <button onClick={() => setActiveModal('NOBALL')} className="flex-1 min-w-[2.5rem] py-3 bg-stone-50 border-2 border-stone-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-stone-100 active:scale-95 transition-all">NB+</button>
+                                            <button onClick={() => setActiveModal('WIDE')} className="flex-1 min-w-[4rem] py-3 bg-orange-50 border-2 border-orange-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-100 active:scale-95 transition-all">Wide</button>
+                                            <button onClick={() => setActiveModal('NOBALL')} className="flex-1 min-w-[4rem] py-3 bg-orange-50 border-2 border-orange-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-orange-600 hover:bg-orange-100 active:scale-95 transition-all">NB</button>
+                                            <button onClick={() => setActiveModal('NOBALL')} className="flex-1 min-w-[3rem] py-3 bg-stone-50 border-2 border-stone-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-stone-100 active:scale-95 transition-all">Bye</button>
+                                            <button onClick={() => setActiveModal('NOBALL')} className="flex-1 min-w-[3rem] py-3 bg-stone-50 border-2 border-stone-100 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:bg-stone-100 active:scale-95 transition-all">LB</button>
                                         </div>
                                         <button onClick={() => setActiveModal('WICKET')} className="w-full py-4 bg-red-600 rounded-xl text-sm font-black uppercase tracking-widest text-white hover:bg-red-700 shadow-lg shadow-red-600/30 active:scale-95 transition-all">Wicket</button>
                                     </div>
