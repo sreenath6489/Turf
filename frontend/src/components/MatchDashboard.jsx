@@ -951,8 +951,10 @@ const MatchDashboard = () => {
                 </div>
             </div>
         );
-        let bestBatsman = null;
-        let bestBowler = null;
+    };
+
+    let bestBatsman = null;
+    let bestBowler = null;
         let bestFielder = null;
         let currentDataToRender = viewInnings === 1 && match.firstInningsData ? match.firstInningsData : match;
         
@@ -1407,7 +1409,6 @@ const MatchDashboard = () => {
             {renderFullScorecard()}
         </div>
     );
-};
 };
 
 export default MatchDashboard;
