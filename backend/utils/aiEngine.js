@@ -1,64 +1,7 @@
-const fourSentences = [
-    "What a shot by {batsman}! That raced to the boundary for four!",
-    "Cracking stroke from {batsman}, beats the fielder for a gorgeous boundary!",
-    "Short, wide, and {batsman} punishes it! Four runs!",
-    "{batsman} finds the gap beautifully! That's four more to the total.",
-    "No need to run for those! {batsman} hits a delightful boundary.",
-    "Oh, glorious from {batsman}! Pierces the off-side field for four.",
-    "{batsman} stands tall and punches it past point for four!",
-    "Brilliant timing by {batsman}! Just a flick of the wrists and it's four.",
-    "Down the ground by {batsman}! One bounce and over the ropes for four.",
-    "What an elegant cover drive from {batsman}, that's a certain boundary!",
-    "Smacked away by {batsman}! The bowler {bowler} can only watch it go for four.",
-    "{batsman} takes full toll of that delivery! Swept away for four.",
-    "A majestic shot by {batsman}, pure timing and it races away for four!",
-    "Threaded the needle! {batsman} finds the boundary with precision.",
-    "{batsman} uses the pace of {bowler} and guides it for four!"
-];
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const sixSentences = [
-    "He's hit that into the crowd! {batsman} hits a massive six!",
-    "Up, up, and away! {batsman} launches it out of the park!",
-    "That is huge from {batsman}! A colossal strike for six!",
-    "Straight down the ground! {batsman} sends it miles into the stands!",
-    "{batsman} takes on {bowler} and clears the boundary with ease. Six runs!",
-    "Clean strike! {batsman} deposits it into the second tier!",
-    "Oh, that makes a beautiful sound off the bat! Six runs to {batsman}!",
-    "He's absolutely tonked that! {batsman} hits a monster six!",
-    "What a phenomenal shot! {batsman} lifts it majestically for six.",
-    "Maximum! {batsman} frees his arms and sends it flying!",
-    "{batsman} goes downtown! A brilliant six under pressure.",
-    "No fielder is catching that! {batsman} launches it for six!",
-    "That went like a tracer bullet! {batsman} smokes it for six!",
-    "{bowler} misses his length and {batsman} makes him pay with a huge six!",
-    "Unbelievable power from {batsman}! A mammoth six!"
-];
-
-const wicketSentences = [
-    "Got him! {bowler} strikes and {batsman} has to walk back!",
-    "Edged and taken! A crucial breakthrough by {bowler} to dismiss {batsman}!",
-    "{bowler} knocks him over! {batsman} is completely bamboozled!",
-    "That's out! {batsman} departs, what a delivery from {bowler}!",
-    "In the air... and caught! {bowler} gets the massive wicket of {batsman}!",
-    "Clean bowled! {bowler} shatters the stumps, {batsman} is gone!",
-    "Plumb in front! {batsman} is given out, {bowler} gets his man!",
-    "A terrible mix-up and {batsman} is run out! Huge moment in the match!",
-    "He's holed out! {batsman} tried to go big but perishes to {bowler}.",
-    "{bowler} provides the magic! {batsman} makes the long walk back.",
-    "Stumped! Brilliant glovework and {batsman} is sent packing by {bowler}!",
-    "What a spectacular catch to dismiss {batsman}! {bowler} is thrilled!",
-    "{batsman} goes for a duck! {bowler} is absolutely fired up!",
-    "The pressure pays off! {bowler} gets the vital wicket of {batsman}.",
-    "Straight into the hands of the fielder! {batsman} departs, {bowler} strikes!"
-];
-
-const overSentences = [
-    "And that concludes the over. {battingTeam} is standing at {score} for {wickets}.",
-    "End of the over by {bowler}. The pressure is slowly building on {battingTeam}.",
-    "A solid over comes to an end. {battingTeam} pushes the score to {score}.",
-    "That's the end of the over. The current score is {score} for {wickets}.",
-    "Over completed! {battingTeam} needs to keep the momentum going here."
-];
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "AIzaSyAfD934PWGtAYrrJgojO9sIFlq6krNhag0");
 
 const generateCommentary = async (event, match) => {
     try {
@@ -68,34 +11,84 @@ const generateCommentary = async (event, match) => {
         const score = match.score;
         const wickets = match.wickets;
 
-        let templates = [];
-        
+        let context = "";
+        let promptType = "";
+
         if (event.type === 'boundary' && event.runs === 4) {
-            templates = fourSentences;
+            promptType = "hype";
+            context = `${batsman} just hit a fantastic 4 off ${bowler}!`;
         } else if (event.type === 'boundary' && event.runs === 6) {
-            templates = sixSentences;
+            promptType = "hype";
+            context = `${batsman} just smashed a massive 6 off ${bowler}!`;
         } else if (event.type === 'wicket') {
-            templates = wicketSentences;
+            promptType = "roast";
+            let dismissal = match.batsmanStats[match.batsmanStats.length - 1]?.dismissal || "got out";
+            context = `${batsman} just got out (${dismissal}) bowled by ${bowler}.`;
         } else if (match.balls > 0 && match.balls % 6 === 0) {
-            templates = overSentences;
+            promptType = "summary";
+            context = `End of the over. ${battingTeam} is at ${score} for ${wickets}.`;
+        } else if (event.type === 'noball' || event.type === 'wide') {
+            promptType = "roast";
+            context = `${bowler} just bowled a ${event.type}!`;
         } else {
-            return null; // Fallback so it doesn't speak randomly
+            return null; // Don't speak for regular balls
         }
 
-        const randomIndex = Math.floor(Math.random() * templates.length);
-        let text = templates[randomIndex];
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        text = text.replace(/{batsman}/g, batsman);
-        text = text.replace(/{bowler}/g, bowler);
-        text = text.replace(/{battingTeam}/g, battingTeam);
-        text = text.replace(/{score}/g, score);
-        text = text.replace(/{wickets}/g, wickets);
+        let systemPrompt = `You are an energetic, slightly unhinged, and modern street-cricket commentator. 
+Keep your response short (1-2 sentences maximum, under 15 words if possible so it's punchy). 
+Do NOT use hashtags. Use Gen-Z slang occasionally but keep it understandable.`;
 
+        if (promptType === "hype") {
+            systemPrompt += ` Hype up the batsman immensely! Make them sound like a god.`;
+        } else if (promptType === "roast") {
+            systemPrompt += ` Roast the player making the mistake mercilessly! Be sarcastic and funny, but keep it PG-13.`;
+        } else {
+            systemPrompt += ` Give a quick, dramatic summary of the situation.`;
+        }
+
+        const prompt = `${systemPrompt}\n\nEvent: ${context}\n\nGenerate the commentary line now:`;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim().replace(/['"]+/g, '');
+        
         return text;
+
     } catch (error) {
-        console.error("Local Engine Error:", error);
+        console.error("Gemini API Error:", error);
+        // Fallback to basic string if API fails or rate limits
+        if (event.runs === 6) return `What a shot! ${match.currentBatsmen.striker?.name} hits a massive six!`;
+        if (event.runs === 4) return `Beautiful boundary by ${match.currentBatsmen.striker?.name}!`;
+        if (event.type === 'wicket') return `Oh dear, ${match.currentBatsmen.striker?.name} is gone!`;
         return "What an incredible moment in this match!";
     }
 };
 
-module.exports = { generateCommentary };
+const generatePlayerCard = async (playerStats) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `You are a hype-man cricket analyst. Given these stats for a player, generate a 2-3 word cool nickname, and a 1-sentence epic quote summarizing their performance. 
+Stats:
+Name: ${playerStats.name}
+Runs: ${playerStats.runs}
+Balls: ${playerStats.balls}
+Fours: ${playerStats.fours}
+Sixes: ${playerStats.sixes}
+Wickets: ${playerStats.wickets || 0}
+
+Output Format strictly as JSON: {"nickname": "The Finisher", "quote": "He came, he saw, he smashed it out of the park."}`;
+
+        const result = await model.generateContent(prompt);
+        let text = result.response.text().trim();
+        // Remove markdown formatting if any
+        text = text.replace(/```json\s*/, '').replace(/\s*```/, '');
+        
+        return JSON.parse(text);
+    } catch (err) {
+        console.error("Player Card Gen Error:", err);
+        return { nickname: "The Star", quote: "A phenomenal performance on the turf!" };
+    }
+};
+
+module.exports = { generateCommentary, generatePlayerCard };

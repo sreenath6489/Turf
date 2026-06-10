@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const Player = require('./models/Player');
 const Match = require('./models/Match');
-const { generateCommentary } = require('./utils/aiEngine');
+const { generateCommentary, generatePlayerCard } = require('./utils/aiEngine');
 
 const app = express();
 app.use(cors());
@@ -338,6 +338,17 @@ app.post('/api/matches/:id/poll/:pollIndex/vote', async (req, res) => {
         
         io.to(id).emit('scoreUpdated', match);
         res.json({ success: true, match });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Generate Player Card
+app.post('/api/matches/:id/generate-card', async (req, res) => {
+    try {
+        const { playerStats } = req.body;
+        const cardData = await generatePlayerCard(playerStats);
+        res.json({ success: true, cardData });
     } catch (error) {
         res.status(500).json({ success: false });
     }

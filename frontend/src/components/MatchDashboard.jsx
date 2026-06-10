@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { toPng } from 'html-to-image';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { playEventSound, speakCommentary } from '../utils/soundservice.js';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
@@ -18,6 +19,10 @@ const MatchDashboard = () => {
 
     // Modals & State
     const [activeModal, setActiveModal] = useState(null);
+    const [playerCardData, setPlayerCardData] = useState(null);
+    const [isCardLoading, setIsCardLoading] = useState(false);
+    const [theme, setTheme] = useState(localStorage.getItem('turf_theme') || 'classic');
+    const [soundPack, setSoundPack] = useState(localStorage.getItem('turf_sound') || 'classic');
     const [tempValue, setTempValue] = useState(0);
     const [tempType, setTempType] = useState('Bat');
     const [wicketData, setWicketData] = useState({ type: 'Bowled', fielder: '', runs: 0, nextBatsman: null });
@@ -67,6 +72,26 @@ const MatchDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll/${pollIndex}/vote`, { optionIndex });
         } catch (err) { console.error("Vote failed"); }
     };
+
+    const handleGenerateCard = async (player) => {
+        setIsCardLoading(true);
+        setActiveModal('PLAYER_CARD');
+        setPlayerCardData(null); // reset old data
+        try {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/generate-card`, {
+                playerStats: player
+            });
+            if (res.data.success) {
+                setPlayerCardData({ ...player, ...res.data.cardData });
+            }
+        } catch (err) {
+            showToast("Card Generation Failed", "error");
+            setActiveModal(null);
+        } finally {
+            setIsCardLoading(false);
+        }
+    };
+
     // AI WIN PROBABILITY & MOMENTUM LOGIC
     const calculateStats = () => {
         if (!match) return { winProb: 50, momentum: 50 };
@@ -500,6 +525,13 @@ const MatchDashboard = () => {
         if (outBatsman.runs === 0 && wicketData.type !== 'Retired') {
             triggerSpecial('DUCK');
         }
+
+        if (wicketData.type !== 'Retired') {
+            setWicketData({ type: 'Bowled', fielder: '', runs: 0, nextBatsman: null, outBatsmanId: newMatch.currentBatsmen.striker?.tid });
+        }
+        
+        // Close wicket modal BEFORE checkInningsStatus so it doesn't override the INNINGS_BREAK modal
+        setActiveModal(null);
 
         checkInningsStatus(newMatch);
         if (wicketData.type !== 'Retired') {
@@ -1024,8 +1056,14 @@ const MatchDashboard = () => {
             if (topFielder) bestFielder = { name: topFielder, dismissals: maxCatches };
         }
 
-            return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 font-sans flex flex-col items-center p-4 md:p-8">
+            let themeClasses = "bg-[#FAF4EA] text-slate-900"; // classic
+        if (theme === 'csk') themeClasses = "bg-yellow-400 text-slate-900";
+        if (theme === 'rcb') themeClasses = "bg-red-900 text-white";
+        if (theme === 'mi') themeClasses = "bg-blue-800 text-white";
+        if (theme === 'dark') themeClasses = "bg-slate-900 text-white";
+
+        return (
+        <div className={`min-h-screen ${themeClasses} font-sans flex flex-col items-center p-4 md:p-8 transition-colors duration-500`}>
             <div className="w-full max-w-4xl flex flex-col gap-6">
                 
                 {/* Top Nav Pill */}
@@ -1046,10 +1084,17 @@ const MatchDashboard = () => {
                         >
                             SCORECARD
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('ANALYTICS')}
+                            className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ANALYTICS' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
+                        >
+                            ANALYTICS
+                        </button>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                        👤
-                    </div>
+                    <button onClick={() => setActiveModal('PREMIUM_SETTINGS')} className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 shadow-lg shadow-yellow-500/20 border border-yellow-300 hover:scale-105 transition-all group relative">
+                        <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full opacity-100 transition-opacity">PRO</div>
+                        👑
+                    </button>
                 </div>
 
                 <div className="flex-1">
@@ -1205,20 +1250,22 @@ const MatchDashboard = () => {
                                     <h2 className="text-2xl font-black italic uppercase text-red-600 mb-6 text-center tracking-widest">Match Awards 🏆</h2>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {bestBatsman && (
-                                            <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100 flex flex-col items-center text-center">
+                                            <button onClick={() => handleGenerateCard(bestBatsman)} className="bg-orange-50 rounded-2xl p-6 border border-orange-100 flex flex-col items-center text-center hover:bg-orange-100 transition-all hover:scale-105 shadow-sm group">
+                                                <div className="absolute -top-3 -right-3 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">AI CARD</div>
                                                 <span className="text-4xl mb-2">🏏</span>
                                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-1">Best Batsman</h3>
                                                 <p className="font-black text-lg text-slate-900">{bestBatsman.name}</p>
                                                 <p className="text-xs font-bold text-slate-500 mt-2">{bestBatsman.runs} ({bestBatsman.balls}) • SR: {(bestBatsman.balls > 0 ? (bestBatsman.runs/bestBatsman.balls)*100 : 0).toFixed(1)}</p>
-                                            </div>
+                                            </button>
                                         )}
                                         {bestBowler && (
-                                            <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100 flex flex-col items-center text-center">
+                                            <button onClick={() => handleGenerateCard(bestBowler)} className="bg-blue-50 rounded-2xl p-6 border border-blue-100 flex flex-col items-center text-center hover:bg-blue-100 transition-all hover:scale-105 shadow-sm group">
+                                                <div className="absolute -top-3 -right-3 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">AI CARD</div>
                                                 <span className="text-4xl mb-2">🎯</span>
                                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Best Bowler</h3>
                                                 <p className="font-black text-lg text-slate-900">{bestBowler.name}</p>
                                                 <p className="text-xs font-bold text-slate-500 mt-2">{bestBowler.wickets}/{bestBowler.runs} • ER: {(bestBowler.balls > 0 ? bestBowler.runs/(bestBowler.balls/6) : 0).toFixed(1)}</p>
-                                            </div>
+                                            </button>
                                         )}
                                         {bestFielder ? (
                                             <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex flex-col items-center text-center">
@@ -1243,6 +1290,62 @@ const MatchDashboard = () => {
                                     Download Match Report
                                 </button>
                             )}
+                        </div>
+                    )}
+
+                    {activeTab === 'ANALYTICS' && (
+                        <div className="flex flex-col gap-6 w-full animate-in fade-in duration-500">
+                            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-red-900/5">
+                                <h2 className="text-2xl font-black italic uppercase text-slate-900 mb-6 text-center tracking-widest">Match Worm 📈</h2>
+                                <div className="h-[400px] w-full">
+                                    {(()=>{
+                                        const t1Name = match.firstInningsData ? match.firstInningsData.battingTeam.name : match.battingTeam.name;
+                                        const t2Name = match.firstInningsData ? match.bowlingTeam.name : match.bowlingTeam.name;
+                                        let data = [{ over: 0, [t1Name]: 0, [t2Name]: 0 }];
+                                        const getOverData = (history) => {
+                                            let overs = []; let currentScore = 0; let legalBalls = 0;
+                                            for (let b of history) {
+                                                let runs = 0;
+                                                if (typeof b === 'number') runs = b;
+                                                else if (typeof b === 'string') {
+                                                    if (b.startsWith('Wd') || b.startsWith('NB')) runs = 1 + (parseInt(b.split('+')[1]) || 0);
+                                                    else if (b.startsWith('W(')) runs = parseInt(b.match(/\d+/)?.[0]) || 0;
+                                                }
+                                                currentScore += runs;
+                                                if (typeof b === 'number' || (typeof b === 'string' && (b === 'W' || b.startsWith('W(')))) legalBalls++;
+                                                if (legalBalls === 6) { overs.push(currentScore); legalBalls = 0; }
+                                            }
+                                            if (legalBalls > 0) overs.push(currentScore);
+                                            return overs;
+                                        };
+                                        const t1Overs = match.firstInningsData ? getOverData(match.firstInningsData.ballHistory) : getOverData(match.ballHistory);
+                                        const t2Overs = match.innings === 2 ? getOverData(match.ballHistory) : [];
+                                        const maxOvers = Math.max(t1Overs.length, t2Overs.length, match.overs || 0);
+                                        for (let i = 0; i < maxOvers; i++) {
+                                            data.push({
+                                                over: i + 1,
+                                                [t1Name]: t1Overs[i] !== undefined ? t1Overs[i] : (t1Overs.length > 0 ? t1Overs[t1Overs.length - 1] : null),
+                                                [t2Name]: t2Overs[i] !== undefined ? t2Overs[i] : null
+                                            });
+                                        }
+                                        return (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                                    <XAxis dataKey="over" stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 700 }} />
+                                                    <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 700 }} />
+                                                    <Tooltip contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                                                    <Legend wrapperStyle={{ fontWeight: 900, paddingTop: '20px' }} />
+                                                    <Line type="monotone" dataKey={t1Name} stroke="#9333ea" strokeWidth={4} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                                                    {match.innings === 2 && (
+                                                        <Line type="monotone" dataKey={t2Name} stroke="#dc2626" strokeWidth={4} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 8 }} />
+                                                    )}
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1394,6 +1497,101 @@ const MatchDashboard = () => {
                             ))}
                         </div>
                         <button onClick={handleBowlerSubmit} disabled={!selectedBowler} className="w-full p-5 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest shadow-xl shadow-red-600/30 disabled:opacity-50">Start Over</button>
+                    </div>
+                </div>
+            )}
+            
+            {activeModal === 'PLAYER_CARD' && (
+                <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4" onClick={() => setActiveModal(null)}>
+                    <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] p-8 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-4 border-yellow-500/30 relative overflow-hidden" onClick={e => e.stopPropagation()}>
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/20 rounded-full blur-3xl"></div>
+                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl"></div>
+                        
+                        <button onClick={() => setActiveModal(null)} className="absolute top-6 right-6 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-white/50 hover:bg-white/20 hover:text-white transition-all">✕</button>
+
+                        <div className="relative z-10">
+                            <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-yellow-500 mb-2">Turf Score Pro AI</h2>
+                            <h3 className="text-3xl font-black italic text-white uppercase mb-8">Player Card</h3>
+
+                            {isCardLoading || !playerCardData ? (
+                                <div className="py-20 flex flex-col items-center justify-center">
+                                    <div className="w-12 h-12 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-xs font-bold text-white/50 animate-pulse">Gemini AI is analyzing performance...</p>
+                                </div>
+                            ) : (
+                                <div className="animate-in zoom-in-95 duration-500">
+                                    <div className="bg-gradient-to-tr from-yellow-600 to-yellow-400 p-1 rounded-2xl shadow-2xl shadow-yellow-500/20 mb-8 inline-block" id="player-card-export">
+                                        <div className="bg-slate-900 px-8 py-4 rounded-xl">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500 mb-1">A.K.A</p>
+                                            <h4 className="text-4xl font-black text-white italic">"{playerCardData.nickname}"</h4>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8 backdrop-blur-md">
+                                        <h5 className="text-xl font-black text-white mb-4 uppercase">{playerCardData.name}</h5>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="text-left bg-white/5 p-3 rounded-xl">
+                                                <p className="text-[10px] text-white/50 uppercase tracking-widest font-black">Runs / Balls</p>
+                                                <p className="text-lg text-white font-bold">{playerCardData.runs} <span className="text-xs text-white/30">({playerCardData.balls})</span></p>
+                                            </div>
+                                            <div className="text-left bg-white/5 p-3 rounded-xl">
+                                                <p className="text-[10px] text-white/50 uppercase tracking-widest font-black">Wickets / Runs</p>
+                                                <p className="text-lg text-white font-bold">{playerCardData.wickets || 0} <span className="text-xs text-white/30">({playerCardData.runsGiven || 0})</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="px-4 border-l-4 border-yellow-500 text-left">
+                                        <p className="text-sm font-bold text-white/80 italic leading-relaxed">
+                                            "{playerCardData.quote}"
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeModal === 'PREMIUM_SETTINGS' && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-black italic text-slate-900 uppercase">Premium <span className="text-yellow-500">Pro</span></h2>
+                            <button onClick={() => setActiveModal(null)} className="w-10 h-10 bg-slate-100 rounded-full font-black text-slate-400 hover:bg-slate-200">✕</button>
+                        </div>
+
+                        <div className="mb-8">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-3">Scoreboard Theme</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['classic', 'dark', 'csk', 'rcb', 'mi'].map(t => (
+                                    <button 
+                                        key={t}
+                                        onClick={() => { setTheme(t); localStorage.setItem('turf_theme', t); }}
+                                        className={`p-3 rounded-2xl border-2 text-xs font-black uppercase transition-all ${theme === t ? 'border-yellow-500 bg-yellow-50 text-yellow-700' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                    >
+                                        {t === 'csk' ? '🟡 Whistle Podu' : t === 'rcb' ? '🔴 Play Bold' : t === 'mi' ? '🔵 Duniya Hila' : t === 'dark' ? '🌙 Dark Mode' : '⚪ Classic'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-3">Sound Pack</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {['classic', 'meme'].map(s => (
+                                    <button 
+                                        key={s}
+                                        onClick={() => { setSoundPack(s); localStorage.setItem('turf_sound', s); }}
+                                        className={`p-3 rounded-2xl border-2 text-xs font-black uppercase transition-all ${soundPack === s ? 'border-yellow-500 bg-yellow-50 text-yellow-700' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                    >
+                                        {s === 'classic' ? '🏟️ Broadcast' : '😂 Meme Mode'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button onClick={() => setActiveModal(null)} className="w-full p-4 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-white font-black uppercase tracking-widest shadow-xl shadow-yellow-500/30 transition-all">Save Changes</button>
                     </div>
                 </div>
             )}
