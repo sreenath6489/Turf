@@ -176,17 +176,11 @@ app.get('/api/matches/live', async (req, res) => {
     }
 });
 
-// Get Match History for a specific player
+// Get Match History (All Completed Matches)
 app.get('/api/matches/history/:tid', async (req, res) => {
     try {
-        const { tid } = req.params;
-        const matches = await Match.find({
-            isCompleted: true,
-            $or: [
-                { "teamA.players.tid": tid },
-                { "teamB.players.tid": tid }
-            ]
-        }).sort({ _id: -1 }); // Newest first
+        // As per user request, we display all completed matches globally for everyone to see
+        const matches = await Match.find({ isCompleted: true }).sort({ _id: -1 }); // Newest first
         res.json(matches);
     } catch (error) {
         res.status(500).json({ message: "Error fetching history" });
