@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const Player = require('./models/Player');
 const Match = require('./models/Match');
-const { generateCommentary, generatePlayerCard } = require('./utils/aiEngine');
+const { generateCommentary, generatePlayerCard, generateMatchSummary } = require('./utils/aiEngine');
 
 const app = express();
 app.use(cors());
@@ -54,6 +54,10 @@ io.on('connection', (socket) => {
 
             // Broadcast ONLY to people in this match room
             io.to(matchId).emit('scoreUpdated', updatedScorecard);
+            
+            if (newBall) {
+                io.to(matchId).emit('liveEvent', newBall);
+            }
         } catch (err) {
             console.error("Error updating score:", err);
         }
@@ -349,6 +353,17 @@ app.post('/api/matches/:id/generate-card', async (req, res) => {
         const { playerStats } = req.body;
         const cardData = await generatePlayerCard(playerStats);
         res.json({ success: true, cardData });
+    } catch (error) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Generate Match Summary
+app.post('/api/matches/:id/generate-summary', async (req, res) => {
+    try {
+        const { matchData } = req.body;
+        const summary = await generateMatchSummary(matchData);
+        res.json({ success: true, summary });
     } catch (error) {
         res.status(500).json({ success: false });
     }

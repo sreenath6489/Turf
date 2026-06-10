@@ -91,4 +91,23 @@ Output Format strictly as JSON: {"nickname": "The Finisher", "quote": "He came, 
     }
 };
 
-module.exports = { generateCommentary, generatePlayerCard };
+const generateMatchSummary = async (matchData) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const prompt = `You are a legendary cricket commentator. Write a 3-sentence epic summary story for this match:
+        Team 1: ${matchData.team1Name} scored ${matchData.team1Score}/${matchData.team1Wickets}
+        Team 2: ${matchData.team2Name} scored ${matchData.team2Score}/${matchData.team2Wickets}
+        Result: ${matchData.result}
+        MVP: ${matchData.mvp.name} (Runs: ${matchData.mvp.runs}, Wickets: ${matchData.mvp.wickets})
+
+        Make it sound like an IPL final, very modern, engaging, and hype. Do not use markdown or hashtags.`;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+    } catch (err) {
+        console.error("Match Summary Gen Error:", err);
+        return "What a phenomenal match! Both teams fought hard till the very end, but only one could emerge victorious on this beautiful day of turf cricket.";
+    }
+};
+
+module.exports = { generateCommentary, generatePlayerCard, generateMatchSummary };
