@@ -51,8 +51,10 @@ export const speakCommentary = (text) => {
     const isMuted = localStorage.getItem('soundMuted') === 'true';
     if (isMuted) return;
 
-    // AI Voice can now work alongside DIAL mode or AI mode
-    // We only skip if explicitly disabled or some other condition
+    // Only speak AI commentary if mode is AI
+    const mode = localStorage.getItem('commentaryMode') || 'AI';
+    if (mode !== 'AI') return;
+
     if ('speechSynthesis' in window) {
         // Cancel previous speech to keep it real-time
         window.speechSynthesis.cancel();
