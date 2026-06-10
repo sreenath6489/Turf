@@ -1846,11 +1846,18 @@ const MatchDashboard = () => {
             bgColor = "bg-blue-600/90";
             text = "FOUR!";
             animation = "animate-pulse scale-125";
+        } else if (specialEvent === 'THALA') {
+            bgColor = "bg-yellow-500/90";
+            text = "THALA FOR A REASON";
+            animation = "animate-pulse scale-110 text-center";
+        } else if (specialEvent !== 'WICKET') {
+            // Fallback for unknown events
+            return null;
         }
 
         return (
             <div className={`fixed inset-0 z-[999] flex items-center justify-center ${bgColor} backdrop-blur-md transition-all duration-300`}>
-                <h1 className={`text-9xl md:text-[12rem] font-black italic text-white drop-shadow-2xl ${animation}`}>
+                <h1 className={`text-6xl md:text-[12rem] font-black italic text-white drop-shadow-2xl ${animation} px-4`}>
                     {text}
                 </h1>
             </div>
