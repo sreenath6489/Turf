@@ -335,8 +335,13 @@ const MatchDashboard = () => {
         localStorage.setItem('commentaryMode', mode);
     };
 
-    const isLastWicket = match.wickets >= match.battingTeam.players.length - 1;
-    const isSoloMode = match.wickets === match.battingTeam.players.length - 1;
+    const remainingBatsmenCountForUI = match.battingTeam.players.filter(p => 
+        p.tid !== match.currentBatsmen.striker?.tid && 
+        p.tid !== match.currentBatsmen.nonStriker?.tid && 
+        !(match.batsmanStats || []).some(s => s.tid === p.tid && s.dismissal !== 'Retired')
+    ).length;
+    const isLastWicket = remainingBatsmenCountForUI === 0;
+    const isSoloMode = remainingBatsmenCountForUI === 0 && !match.currentBatsmen.nonStriker;
 
     const syncMatch = (newMatchState, newBallEvent = {}) => {
         setMatch(newMatchState);
@@ -351,8 +356,7 @@ const MatchDashboard = () => {
     };
 
     const checkInningsStatus = (newMatch) => {
-        const teamSize = newMatch.battingTeam.players.length;
-        const isAllOut = newMatch.wickets >= teamSize;
+        const isAllOut = !newMatch.currentBatsmen.striker && !newMatch.currentBatsmen.nonStriker;
         const isOversDone = newMatch.balls >= newMatch.overs * 6;
         const isTargetReached = newMatch.innings === 2 && newMatch.score >= newMatch.target;
 
@@ -526,7 +530,7 @@ const MatchDashboard = () => {
     };
 
     const handleWicketSubmit = () => {
-        if (!isLastWicket && !wicketData.nextBatsman && wicketData.type !== 'AllOut' && match.wickets < match.battingTeam.players.length - 2) {
+        if (!isLastWicket && !wicketData.nextBatsman && wicketData.type !== 'AllOut') {
             alert("Select the next batsman!");
             return;
         }
@@ -543,12 +547,12 @@ const MatchDashboard = () => {
             ballHistory: [...match.ballHistory],
             batsmanStats: [...(match.batsmanStats || [])]
         };
-        newMatch.wickets += 1;
 
         let outBatsman = wicketData.outBatsmanId === match.currentBatsmen.nonStriker?.tid ? match.currentBatsmen.nonStriker : match.currentBatsmen.striker;
         let isStrikerOut = outBatsman.tid === match.currentBatsmen.striker?.tid;
 
         if (wicketData.type !== 'Retired') {
+            newMatch.wickets += 1;
             newMatch.balls += 1;
             newMatch.currentBatsmen.striker.balls += 1;
             newMatch.currentBowler.balls += 1;
@@ -580,32 +584,42 @@ const MatchDashboard = () => {
             dismissal: dismissalStr
         });
 
-        if (!isLastWicket) {
-            if (match.wickets === match.battingTeam.players.length - 2) {
-                // This was the 2nd to last wicket. One player is left.
-                // Move the non-striker to striker for solo play if needed.
-                if (isStrikerOut) {
-                    newMatch.currentBatsmen.striker = { ...newMatch.currentBatsmen.nonStriker };
-                    newMatch.currentBatsmen.nonStriker = null;
-                } else {
-                    newMatch.currentBatsmen.nonStriker = null;
-                }
+        const remainingBatsmenCount = match.battingTeam.players.filter(p => 
+            p.tid !== match.currentBatsmen.striker?.tid && 
+            p.tid !== match.currentBatsmen.nonStriker?.tid && 
+            !(match.batsmanStats || []).some(s => s.tid === p.tid && s.dismissal !== 'Retired')
+        ).length;
+
+        const wasSoloMode = !match.currentBatsmen.nonStriker;
+
+        if (wasSoloMode && remainingBatsmenCount === 0) {
+            newMatch.currentBatsmen.striker = null;
+            newMatch.currentBatsmen.nonStriker = null;
+        } else if (remainingBatsmenCount === 0) {
+            if (isStrikerOut) {
+                newMatch.currentBatsmen.striker = { ...newMatch.currentBatsmen.nonStriker };
+                newMatch.currentBatsmen.nonStriker = null;
             } else {
-                if (isStrikerOut) {
-                    newMatch.currentBatsmen.striker = {
-                        ...wicketData.nextBatsman,
-                        runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
-                    };
-                } else {
-                    newMatch.currentBatsmen.nonStriker = {
-                        ...wicketData.nextBatsman,
-                        runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
-                    };
-                }
+                newMatch.currentBatsmen.nonStriker = null;
             }
         } else {
-            if (isStrikerOut) newMatch.currentBatsmen.striker = null;
-            else newMatch.currentBatsmen.nonStriker = null;
+            let nextBatStats;
+            const retiredIdx = newMatch.batsmanStats.findIndex(s => s.tid === wicketData.nextBatsman?.tid && s.dismissal === 'Retired');
+            if (retiredIdx >= 0) {
+                nextBatStats = { ...newMatch.batsmanStats[retiredIdx], dismissal: 'not out' };
+                newMatch.batsmanStats.splice(retiredIdx, 1);
+            } else {
+                nextBatStats = {
+                    ...wicketData.nextBatsman,
+                    runs: 0, balls: 0, fours: 0, sixes: 0, dismissal: 'not out'
+                };
+            }
+
+            if (isStrikerOut) {
+                newMatch.currentBatsmen.striker = nextBatStats;
+            } else {
+                newMatch.currentBatsmen.nonStriker = nextBatStats;
+            }
         }
 
         if ((wicketData.runs || 0) % 2 !== 0 && !isLastWicket) {
@@ -616,9 +630,7 @@ const MatchDashboard = () => {
             triggerSpecial('DUCK');
         }
 
-        if (wicketData.type !== 'Retired') {
-            setWicketData({ type: 'Bowled', fielder: '', runs: 0, nextBatsman: null, outBatsmanId: newMatch.currentBatsmen.striker?.tid });
-        }
+        setWicketData({ type: 'Bowled', fielder: '', runs: 0, nextBatsman: null, outBatsmanId: newMatch.currentBatsmen.striker?.tid });
         
         // Close wicket modal BEFORE checkInningsStatus so it doesn't override the INNINGS_BREAK modal
         setActiveModal(null);
@@ -1647,7 +1659,7 @@ const MatchDashboard = () => {
                             <div className="mb-8">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-3">Next Batsman</label>
                                 <div className="grid grid-cols-2 gap-2">
-                                    {match.battingTeam.players.filter(p => p.tid !== match.currentBatsmen.striker?.tid && p.tid !== match.currentBatsmen.nonStriker?.tid && !(match.batsmanStats || []).some(s => s.tid === p.tid)).map(p => (
+                                    {match.battingTeam.players.filter(p => p.tid !== match.currentBatsmen.striker?.tid && p.tid !== match.currentBatsmen.nonStriker?.tid && !(match.batsmanStats || []).some(s => s.tid === p.tid && s.dismissal !== 'Retired')).map(p => (
                                         <button key={p.tid} onClick={() => setWicketData({...wicketData, nextBatsman: p})} className={`p-3 rounded-xl border-2 text-xs font-black transition-all ${wicketData.nextBatsman?.tid === p.tid ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600 bg-white hover:border-slate-300'}`}>{p.name}</button>
                                     ))}
                                 </div>
@@ -1665,9 +1677,29 @@ const MatchDashboard = () => {
                     <div className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-md text-center max-h-[80vh] overflow-y-auto">
                         <h2 className="text-2xl font-black italic text-slate-900 uppercase mb-8">Select Bowler</h2>
                         <div className="grid grid-cols-2 gap-3 mb-8">
-                            {match.bowlingTeam.players.map(p => (
-                                <button key={p.tid} onClick={() => {if (match.currentBowler?.tid !== p.tid) setSelectedBowler(p)}} className={`p-4 rounded-2xl border-2 text-xs font-black transition-all ${selectedBowler?.tid === p.tid ? 'border-red-600 bg-red-50 text-red-600' : (match.currentBowler?.tid === p.tid ? 'border-slate-100 text-slate-300 bg-stone-50' : 'border-slate-200 text-slate-600 hover:border-slate-300')}`}>{p.name}</button>
-                            ))}
+                            {match.bowlingTeam.players.map(p => {
+                                const stats = (match.bowlerStats || []).find(b => b.tid === p.tid);
+                                const oversBowled = stats ? Math.floor(stats.balls / 6) : 0;
+                                const isMaxedOut = oversBowled >= maxOversPerBowler;
+                                const isCurrent = match.currentBowler?.tid === p.tid;
+
+                                return (
+                                    <button 
+                                        key={p.tid} 
+                                        disabled={isMaxedOut || isCurrent}
+                                        onClick={() => setSelectedBowler(p)} 
+                                        className={`p-4 rounded-2xl border-2 text-xs font-black transition-all ${
+                                            selectedBowler?.tid === p.tid 
+                                                ? 'border-red-600 bg-red-50 text-red-600' 
+                                                : (isCurrent || isMaxedOut 
+                                                    ? 'border-slate-100 text-slate-300 bg-stone-50 opacity-50 cursor-not-allowed' 
+                                                    : 'border-slate-200 text-slate-600 hover:border-slate-300')
+                                        }`}
+                                    >
+                                        {p.name} {isMaxedOut ? '(Max)' : ''}
+                                    </button>
+                                );
+                            })}
                         </div>
                         <button onClick={handleBowlerSubmit} disabled={!selectedBowler} className="w-full p-5 rounded-2xl bg-red-600 text-white font-black uppercase tracking-widest shadow-xl shadow-red-600/30 disabled:opacity-50">Start Over</button>
                     </div>
