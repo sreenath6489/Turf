@@ -12,21 +12,21 @@ const Signup = () => {
         setLoading(true);
         try {
             // Try to login first
-            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/login`, { identifier: name });
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/login`, { identifier: name });
             localStorage.setItem('user', JSON.stringify(res.data.player));
             navigate('/home');
         } catch (err) {
             // If player not found, sign them up automatically
             if (err.response && err.response.status === 404) {
                 try {
-                    const signupRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/signup`, {
+                    const signupRes = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/signup`, {
                         name: name,
                         profilePic: '',
                         role: 'Batsman'
                     });
                     
                     // After signup, login with their new tid
-                    const loginRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/login`, { identifier: signupRes.data.player.tid });
+                    const loginRes = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/login`, { identifier: signupRes.data.player.tid });
                     localStorage.setItem('user', JSON.stringify(loginRes.data.player));
                     navigate('/home');
                 } catch (signupErr) {

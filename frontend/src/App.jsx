@@ -9,6 +9,7 @@ import SetupPlayers from './components/SetupPlayers';
 import PlayerStats from './components/PlayerStats';
 import SquadsPoster from './components/SquadsPoster';
 import Welcome from './components/Welcome';
+import Teams from './components/Teams';
 
 // KEEP THIS OUTSIDE THE APP FUNCTION
 const ProtectedRoute = ({ children }) => {
@@ -55,6 +56,7 @@ export default function App() {
           <Route path="/scoreboard" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
           <Route path="/player-stats/:tid" element={<ProtectedRoute><PlayerStats /></ProtectedRoute>} />
           <Route path="/squads" element={<ProtectedRoute><SquadsPoster /></ProtectedRoute>} />
+          <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

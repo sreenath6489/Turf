@@ -13,14 +13,14 @@ const PlayerStats = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/players/stats/${tid}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/players/stats/${tid}`);
                 setStats(res.data);
                 
                 // Also get player name from storage or search if needed
                 const user = JSON.parse(localStorage.getItem('user'));
                 if (user?.tid === tid) setPlayerName(user.name);
                 else {
-                    const pRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/players/search?query=${tid}`);
+                    const pRes = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/players/search?query=${tid}`);
                     if (pRes.data.length > 0) setPlayerName(pRes.data[0].name);
                 }
             } catch (err) {

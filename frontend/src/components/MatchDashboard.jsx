@@ -6,7 +6,7 @@ import { toPng } from 'html-to-image';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { playEventSound, speakCommentary } from '../utils/soundservice.js';
 
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+const socket = io(import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`);
 
 const MatchDashboard = () => {
     const { id } = useParams();
@@ -51,7 +51,7 @@ const MatchDashboard = () => {
 
     const handleTransfer = async (newAdminId) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/transfer`, { newAdminId });
+            await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${id}/transfer`, { newAdminId });
             setTransferModal(false);
             showToast("Control Transferred! 👑", "info");
         } catch (err) { showToast("Transfer failed", "error"); }
@@ -59,7 +59,7 @@ const MatchDashboard = () => {
 
     const handleCreatePoll = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll`, { 
+            await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${id}/poll`, { 
                 question: newPoll.question, 
                 options: newPoll.options.filter(o => o.trim() !== '') 
             });
@@ -71,7 +71,7 @@ const MatchDashboard = () => {
 
     const handleVote = async (pollIndex, optionIndex) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/poll/${pollIndex}/vote`, { optionIndex });
+            await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${id}/poll/${pollIndex}/vote`, { optionIndex });
         } catch (err) { console.error("Vote failed"); }
     };
 
@@ -80,7 +80,7 @@ const MatchDashboard = () => {
         setActiveModal('PLAYER_CARD');
         setPlayerCardData(null); // reset old data
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}/generate-card`, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${id}/generate-card`, {
                 playerStats: player
             });
             if (res.data.success) {
@@ -184,13 +184,44 @@ const MatchDashboard = () => {
 
         const fetchMatch = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${id}`);
-                setMatch(res.data);
-                setViewInnings(res.data.innings);
-                if (res.data.isCompleted) {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${id}`);
+                
+                // --- SYNC MID-INNINGS PLAYERS FROM LOCAL STORAGE ---
+                let fetchedMatch = res.data;
+                const savedTeams = JSON.parse(localStorage.getItem('turf_teams') || '[]');
+                let updated = false;
+
+                const syncTeamDirectly = (teamKey) => {
+                     const matchTeam = fetchedMatch[teamKey];
+                     if (!matchTeam) return;
+                     const localTeam = savedTeams.find(t => t.name === matchTeam.name);
+                     if (localTeam) {
+                         const newPlayers = localTeam.players.filter(lp => 
+                            !matchTeam.players.some(mp => mp.tid === lp.tid)
+                         );
+                         if (newPlayers.length > 0) {
+                             updated = true;
+                             fetchedMatch[teamKey].players = [...matchTeam.players, ...newPlayers];
+                         }
+                     }
+                }
+                
+                syncTeamDirectly('teamA');
+                syncTeamDirectly('teamB');
+                syncTeamDirectly('battingTeam');
+                syncTeamDirectly('bowlingTeam');
+                // ---------------------------------------------------
+
+                setMatch(fetchedMatch);
+                setViewInnings(fetchedMatch.innings);
+                if (fetchedMatch.isCompleted) {
                     setActiveTab('GRAND_ANALYTICS');
                 }
                 socket.emit('joinMatch', id);
+                
+                if (updated) {
+                    socket.emit('updateBall', { matchId: fetchedMatch._id, newBall: {}, updatedScorecard: fetchedMatch });
+                }
             } catch (err) {
                 alert("Match not found");
                 navigate('/home');
@@ -220,8 +251,13 @@ const MatchDashboard = () => {
 
         socket.on('newCommentary', (data) => {
             if (!data.text) return;
-            setCommentary(data.text);
-            speakCommentary(data.text);
+            const mode = localStorage.getItem('commentaryMode') || 'AI';
+            if (mode !== 'OFF') {
+                setCommentary(data.text);
+                if (mode === 'AI') {
+                    speakCommentary(data.text);
+                }
+            }
             setTimeout(() => setCommentary(""), 8000);
         });
 
@@ -300,7 +336,7 @@ const MatchDashboard = () => {
             const fetchSummary = async () => {
                 try {
                     const awards = calculateAwards();
-                    const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/${match._id}/generate-summary`, {
+                    const res = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${match._id}/generate-summary`, {
                         matchData: {
                             team1Name: match.bowlingTeam?.name,
                             team1Score: match.firstInningsData?.score,
@@ -1232,46 +1268,46 @@ const MatchDashboard = () => {
                 <div className="flex-1">
                     {activeTab === 'LIVE' && (
                         <div className="space-y-6">
-                            {/* Giant Purple Score Card */}
-                            <div className="bg-[#26124B] rounded-[3rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden">
-                                {/* Decorative Blur */}
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
-                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl"></div>
+                            {/* Unified Light Score Card */}
+                            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-slate-900 shadow-xl shadow-red-900/5 border border-slate-100 relative overflow-hidden">
+                                {/* Decorative Soft Blurs */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-900/5 rounded-full blur-3xl pointer-events-none"></div>
                                 
                                 <div className="flex justify-between items-start relative z-10">
-                                    <div className="bg-white/5 border border-white/10 px-5 py-3 rounded-2xl backdrop-blur-sm">
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-purple-300 mb-1">Live Match</p>
-                                        <p className="text-sm font-black uppercase italic">{currentDataToRender.battingTeam?.name || 'Team'}, {currentDataToRender.innings || 1}{currentDataToRender.innings === 1 ? 'st' : 'nd'} inn</p>
+                                    <div className="bg-red-50 border border-red-100 px-5 py-3 rounded-2xl">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-red-500 mb-1">Live Match</p>
+                                        <p className="text-sm font-black uppercase italic text-slate-900">{currentDataToRender.battingTeam?.name || 'Team'}, {currentDataToRender.innings || 1}{currentDataToRender.innings === 1 ? 'st' : 'nd'} inn</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-purple-300 mb-1">Overs</p>
-                                        <p className="text-2xl font-black italic">{formatOvers(currentDataToRender.balls)} <span className="text-sm text-purple-300">/ {match.overs}</span></p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Overs</p>
+                                        <p className="text-2xl font-black italic text-slate-900">{formatOvers(currentDataToRender.balls)} <span className="text-sm text-slate-400">/ {match.overs}</span></p>
                                     </div>
                                 </div>
 
-                                <div className="text-center my-12 relative z-10">
-                                    <h1 className="text-8xl md:text-9xl font-black italic tracking-tighter flex items-end justify-center gap-2">
-                                        {currentDataToRender.score} <span className="text-4xl md:text-6xl text-purple-300">/{currentDataToRender.wickets}</span>
+                                <div className="text-center my-6 md:my-12 relative z-10">
+                                    <h1 className="text-6xl md:text-9xl font-black italic tracking-tighter flex items-end justify-center gap-2 text-slate-900">
+                                        {currentDataToRender.score} <span className="text-4xl md:text-6xl text-red-600">/{currentDataToRender.wickets}</span>
                                     </h1>
                                     <div className="flex flex-col items-center gap-3 mt-6">
                                         <div className="flex gap-4 flex-wrap justify-center">
-                                            <div className="inline-flex px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                                                <span className="text-xs font-black uppercase tracking-widest text-purple-200">CRR: {getEcon(currentDataToRender.score, currentDataToRender.balls)}</span>
+                                            <div className="inline-flex px-6 py-2 rounded-full bg-slate-50 border border-slate-200 items-center gap-2 shadow-sm">
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                <span className="text-xs font-black uppercase tracking-widest text-slate-600">CRR: {getEcon(currentDataToRender.score, currentDataToRender.balls)}</span>
                                             </div>
                                             {match.currentBatsmen?.striker && match.currentBatsmen?.nonStriker && (
-                                                <div className="inline-flex px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md items-center gap-2">
+                                                <div className="inline-flex px-6 py-2 rounded-full bg-slate-50 border border-slate-200 items-center gap-2 shadow-sm">
                                                     <span className="text-xl">🤝</span>
-                                                    <span className="text-xs font-black uppercase tracking-widest text-purple-200">
+                                                    <span className="text-xs font-black uppercase tracking-widest text-slate-600">
                                                         P'ship: {match.currentBatsmen.striker.runs + match.currentBatsmen.nonStriker.runs}
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
                                         {match.innings === 2 && viewInnings === 2 && (
-                                            <div className="inline-flex px-6 py-3 bg-red-500/20 border border-red-500/30 rounded-full backdrop-blur-md animate-pulse">
-                                                <span className="text-red-100 font-black tracking-[0.1em] uppercase text-xs md:text-sm">
-                                                    Target: {match.target} <span className="mx-2 text-red-500/50">•</span> Need <span className="text-red-400">{Math.max(0, match.target - match.score)}</span> from <span className="text-red-400">{match.overs * 6 - match.balls}</span> <span className="mx-2 text-red-500/50">•</span> RRR: {getEcon(Math.max(0, match.target - match.score), match.overs * 6 - match.balls)}
+                                            <div className="inline-flex px-6 py-3 bg-red-50 border border-red-200 rounded-full shadow-sm animate-pulse mt-2">
+                                                <span className="text-slate-800 font-black tracking-[0.1em] uppercase text-xs md:text-sm">
+                                                    Target: {match.target} <span className="mx-2 text-slate-300">•</span> Need <span className="text-red-600">{Math.max(0, match.target - match.score)}</span> from <span className="text-red-600">{match.overs * 6 - match.balls}</span> <span className="mx-2 text-slate-300">•</span> RRR: {getEcon(Math.max(0, match.target - match.score), match.overs * 6 - match.balls)}
                                                 </span>
                                             </div>
                                         )}
@@ -1280,7 +1316,7 @@ const MatchDashboard = () => {
                             </div>
 
                             {/* Tables & Admin Controls */}
-                            <div className="flex flex-col lg:flex-row gap-6">
+                            <div className="flex flex-col-reverse lg:flex-row gap-4 md:gap-6">
                                 {/* Batting/Bowling */}
                                 <div className="flex-[2] bg-white rounded-[2.5rem] p-6 shadow-xl shadow-red-900/5 border border-slate-100 overflow-x-auto">
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Current Action</h3>
@@ -1348,7 +1384,7 @@ const MatchDashboard = () => {
 
                                 {/* Admin Controls (Now beside table) */}
                                 {isAdmin && !match.isCompleted && !activeModal && viewInnings === match.innings ? (
-                                    <div className="flex-[1.5] bg-white rounded-[2.5rem] p-6 shadow-xl shadow-red-900/5 border border-slate-100 flex flex-col justify-between min-w-[320px]">
+                                    <div className="flex-[1.5] bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-red-900/5 border border-slate-100 flex flex-col justify-between w-full md:min-w-[320px]">
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admin Controls</h4>
                                             <div className="flex gap-2">

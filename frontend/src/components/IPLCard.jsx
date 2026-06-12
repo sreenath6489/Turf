@@ -7,7 +7,7 @@ const IPLCard = () => {
 
     const fetchScore = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/ipl/live`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/ipl/live`);
             setMatch(res.data);
         } catch (err) {
             console.error("IPL Fetch Error:", err);

@@ -71,7 +71,7 @@ const SetupPlayers = () => {
                 target: state.target
             };
 
-            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/matches/create`, matchData);
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/create`, matchData);
 
             if (res.data.success) {
                 // CLEAR TEMP STATES
