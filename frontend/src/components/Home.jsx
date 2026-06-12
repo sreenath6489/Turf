@@ -117,7 +117,7 @@ const Home = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div
                     onClick={() => navigate('/create-match')}
-                    className="relative overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-900 group rounded-[2.5rem] p-8 md:p-10 h-56 flex flex-col justify-end cursor-pointer shadow-2xl shadow-red-900/40 hover:scale-[0.99] transition-all duration-500 border-b-4 border-black/20"
+                    className="relative overflow-hidden bg-gradient-to-br from-red-600 via-red-700 to-rose-900 group rounded-[2.5rem] p-6 md:p-10 h-56 flex flex-col justify-end cursor-pointer shadow-2xl shadow-red-900/40 hover:scale-[0.99] transition-all duration-500 border-b-4 border-black/20"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity rotate-12 scale-150">
                         <svg width="200" height="200" viewBox="0 0 100 100" fill="white"><path d="M50 5L95 95H5L50 5Z" /></svg>
@@ -133,7 +133,7 @@ const Home = () => {
 
                 <div
                     onClick={() => navigate('/teams')}
-                    className="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 group rounded-[2.5rem] p-8 md:p-10 h-56 flex flex-col justify-end cursor-pointer shadow-2xl shadow-slate-900/40 hover:scale-[0.99] transition-all duration-500 border-b-4 border-black/20"
+                    className="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 group rounded-[2.5rem] p-6 md:p-10 h-56 flex flex-col justify-end cursor-pointer shadow-2xl shadow-slate-900/40 hover:scale-[0.99] transition-all duration-500 border-b-4 border-black/20"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity rotate-45 scale-150">
                         <svg width="200" height="200" viewBox="0 0 100 100" fill="white"><circle cx="50" cy="50" r="40" /></svg>

@@ -47,7 +47,7 @@ const CreateMatch = () => {
 
                 {/* THE ARENA (VS SECTION) */}
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center mb-10">
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-red-900/5 border border-red-900/5 relative overflow-hidden group">
+                    <div className="bg-white p-5 md:p-8 rounded-[2.5rem] shadow-2xl shadow-red-900/5 border border-red-900/5 relative overflow-hidden group">
                         <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
                         <label className="text-[10px] font-black text-red-600/40 uppercase tracking-widest mb-2 block">Team A Selection</label>
                         <select 
@@ -67,7 +67,7 @@ const CreateMatch = () => {
                         <div className="w-px h-12 bg-slate-200 -mt-6 hidden md:block"></div>
                     </div>
 
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-red-900/5 border border-red-900/5 relative overflow-hidden text-right">
+                    <div className="bg-white p-5 md:p-8 rounded-[2.5rem] shadow-2xl shadow-red-900/5 border border-red-900/5 relative overflow-hidden text-right">
                         <div className="absolute top-0 right-0 w-1.5 h-full bg-slate-400/20"></div>
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Team B Selection</label>
                         <select 

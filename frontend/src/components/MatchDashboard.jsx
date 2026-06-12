@@ -1234,26 +1234,26 @@ const MatchDashboard = () => {
                     <div className="flex-1 flex justify-center gap-2 px-2">
                         <button 
                             onClick={() => setActiveTab('LIVE')}
-                            className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'LIVE' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
+                            className={`px-4 md:px-8 py-2 md:py-3 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'LIVE' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
                         >
                             LIVE
                         </button>
                         <button 
                             onClick={() => setActiveTab('BALL BY BALL')}
-                            className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'BALL BY BALL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
+                            className={`px-4 md:px-8 py-2 md:py-3 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'BALL BY BALL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
                         >
                             SCORECARD
                         </button>
                         <button 
                             onClick={() => setActiveTab('ANALYTICS')}
-                            className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ANALYTICS' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
+                            className={`px-4 md:px-8 py-2 md:py-3 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ANALYTICS' ? 'bg-red-600 text-white shadow-lg shadow-red-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
                         >
                             ANALYTICS
                         </button>
                         {match.isCompleted && (
                             <button 
                                 onClick={() => setActiveTab('GRAND_ANALYTICS')}
-                                className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'GRAND_ANALYTICS' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
+                                className={`px-4 md:px-8 py-2 md:py-3 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'GRAND_ANALYTICS' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-50'}`}
                             >
                                 🏆 GRAND
                             </button>
@@ -1269,7 +1269,7 @@ const MatchDashboard = () => {
                     {activeTab === 'LIVE' && (
                         <div className="space-y-6">
                             {/* Unified Light Score Card */}
-                            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 text-slate-900 shadow-xl shadow-red-900/5 border border-slate-100 relative overflow-hidden">
+                            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-4 md:p-10 text-slate-900 shadow-xl shadow-red-900/5 border border-slate-100 relative overflow-hidden">
                                 {/* Decorative Soft Blurs */}
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
                                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-900/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -1286,8 +1286,8 @@ const MatchDashboard = () => {
                                 </div>
 
                                 <div className="text-center my-6 md:my-12 relative z-10">
-                                    <h1 className="text-6xl md:text-9xl font-black italic tracking-tighter flex items-end justify-center gap-2 text-slate-900">
-                                        {currentDataToRender.score} <span className="text-4xl md:text-6xl text-red-600">/{currentDataToRender.wickets}</span>
+                                    <h1 className="text-5xl md:text-9xl font-black italic tracking-tighter flex items-end justify-center gap-2 text-slate-900">
+                                        {currentDataToRender.score} <span className="text-3xl md:text-6xl text-red-600">/{currentDataToRender.wickets}</span>
                                     </h1>
                                     <div className="flex flex-col items-center gap-3 mt-6">
                                         <div className="flex gap-4 flex-wrap justify-center">
@@ -1318,7 +1318,7 @@ const MatchDashboard = () => {
                             {/* Tables & Admin Controls */}
                             <div className="flex flex-col-reverse lg:flex-row gap-4 md:gap-6">
                                 {/* Batting/Bowling */}
-                                <div className="flex-[2] bg-white rounded-[2.5rem] p-6 shadow-xl shadow-red-900/5 border border-slate-100 overflow-x-auto">
+                                <div className="flex-[2] bg-white rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-red-900/5 border border-slate-100 overflow-x-auto">
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Current Action</h3>
                                     <table className="w-full text-xs font-bold text-left mb-6">
                                         <thead className="text-[8px] uppercase tracking-widest text-slate-400 border-b border-slate-100">
@@ -1384,7 +1384,7 @@ const MatchDashboard = () => {
 
                                 {/* Admin Controls (Now beside table) */}
                                 {isAdmin && !match.isCompleted && !activeModal && viewInnings === match.innings ? (
-                                    <div className="flex-[1.5] bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-red-900/5 border border-slate-100 flex flex-col justify-between w-full md:min-w-[320px]">
+                                    <div className="flex-[1.5] bg-white rounded-[2rem] md:rounded-[2.5rem] p-3 md:p-6 shadow-xl shadow-red-900/5 border border-slate-100 flex flex-col justify-between w-full md:min-w-[320px]">
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admin Controls</h4>
                                             <div className="flex gap-2">
