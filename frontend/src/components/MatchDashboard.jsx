@@ -391,7 +391,7 @@ const MatchDashboard = () => {
         currentMatch.currentBatsmen.nonStriker = temp;
     };
 
-    const checkInningsStatus = (newMatch) => {
+    const checkInningsStatus = (newMatch, isExtra = false) => {
         const isAllOut = !newMatch.currentBatsmen.striker && !newMatch.currentBatsmen.nonStriker;
         const isOversDone = newMatch.balls >= newMatch.overs * 6;
         const isTargetReached = newMatch.innings === 2 && newMatch.score >= newMatch.target;
@@ -430,7 +430,7 @@ const MatchDashboard = () => {
             }
             
             setActiveModal('INNINGS_BREAK');
-        } else if (newMatch.balls % 6 === 0 && !isAllOut && !isTargetReached) {
+        } else if (!isExtra && newMatch.balls > 0 && newMatch.balls % 6 === 0 && !isAllOut && !isTargetReached) {
             rotateStrike(newMatch);
             newMatch.currentBowler.overs = Math.floor(newMatch.currentBowler.balls / 6);
             setActiveModal('BOWLER');
@@ -523,7 +523,7 @@ const MatchDashboard = () => {
 
         if (extraRuns % 2 !== 0) rotateStrike(newMatch);
 
-        checkInningsStatus(newMatch);
+        checkInningsStatus(newMatch, true);
         syncMatch(newMatch, { runs: totalRuns, type: 'wide', description: `Wide ball plus ${extraRuns} extra runs` });
     };
 
@@ -561,7 +561,7 @@ const MatchDashboard = () => {
 
         if (runs % 2 !== 0) rotateStrike(newMatch);
 
-        checkInningsStatus(newMatch);
+        checkInningsStatus(newMatch, true);
         syncMatch(newMatch, { runs: totalRuns, type: 'noball', description: `No ball! And they ran ${runs} extra runs` });
     };
 

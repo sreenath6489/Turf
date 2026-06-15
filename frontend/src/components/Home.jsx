@@ -24,7 +24,8 @@ const Home = () => {
         const fetchLiveMatches = async () => {
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/live`);
-                setLiveMatches(res.data);
+                const sorted = res.data.sort((a, b) => b._id.localeCompare(a._id));
+                setLiveMatches(sorted);
             } catch (err) {
                 console.error("Error fetching live matches", err);
             }
@@ -33,7 +34,8 @@ const Home = () => {
         const fetchHistory = async () => {
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/history/${parsedUser.tid}`);
-                setHistory(res.data);
+                const sorted = res.data.sort((a, b) => b._id.localeCompare(a._id));
+                setHistory(sorted);
             } catch (err) {
                 console.error("Error fetching match history", err);
             }
@@ -43,9 +45,13 @@ const Home = () => {
         fetchHistory();
 
         socket.on('scoreUpdated', (updatedMatch) => {
-            setLiveMatches(prev =>
-                prev.map(m => m._id === updatedMatch._id ? updatedMatch : m)
-            );
+            setLiveMatches(prev => {
+                const exists = prev.some(m => m._id === updatedMatch._id);
+                let newList = exists 
+                    ? prev.map(m => m._id === updatedMatch._id ? updatedMatch : m)
+                    : [updatedMatch, ...prev];
+                return newList.sort((a, b) => b._id.localeCompare(a._id));
+            });
         });
 
         return () => socket.off('scoreUpdated');
@@ -57,6 +63,15 @@ const Home = () => {
     };
 
     if (!user) return null;
+
+    const getMatchDate = (id) => {
+        try {
+            const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+            return new Date(timestamp).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch (err) {
+            return '';
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 font-sans selection:bg-red-200 selection:text-slate-900 pb-20 relative overflow-hidden">
@@ -165,7 +180,10 @@ const Home = () => {
                                 className="bg-white border border-red-900/10 shadow-sm p-6 rounded-[2rem] hover:border-red-600/50 transition-all cursor-pointer group"
                             >
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{match.overs} Overs Match</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{match.overs} Overs Match</span>
+                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">• {getMatchDate(match._id)}</span>
+                                    </div>
                                     <span className="bg-red-50 text-red-600 text-[8px] font-black px-2 py-0.5 rounded uppercase border border-red-200 animate-pulse">Live</span>
                                 </div>
                                 <div className="flex justify-between items-center">
@@ -209,7 +227,10 @@ const Home = () => {
                                     className="bg-white border border-red-900/10 shadow-sm p-5 rounded-3xl hover:border-red-600/30 transition-all cursor-pointer"
                                 >
                                     <div className="flex justify-between items-center mb-3">
-                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{match.teamA.name} vs {match.teamB.name}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{match.teamA.name} vs {match.teamB.name}</span>
+                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{getMatchDate(match._id)}</span>
+                                        </div>
                                         <span className="bg-stone-100 text-slate-500 border border-slate-200 text-[8px] font-black px-2 py-0.5 rounded uppercase">Completed</span>
                                     </div>
                                     <div className="flex justify-between items-center">
