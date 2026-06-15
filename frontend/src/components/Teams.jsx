@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Teams = () => {
     const navigate = useNavigate();
@@ -7,6 +8,8 @@ const Teams = () => {
     const [newTeamName, setNewTeamName] = useState('');
     const [activeTeamId, setActiveTeamId] = useState(null);
     const [newPlayerName, setNewPlayerName] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         const savedTeams = localStorage.getItem('turf_teams');
@@ -60,6 +63,48 @@ const Teams = () => {
         });
         saveTeams(updated);
         setNewPlayerName('');
+        setSearchResults([]);
+    };
+
+    const handleSearchChange = async (e) => {
+        const query = e.target.value;
+        setNewPlayerName(query);
+        
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/players/search?query=${query}`);
+            const activeTeam = teams.find(t => t.id === activeTeamId);
+            const filtered = res.data.filter(p => !activeTeam.players.some(tp => tp.tid === p.tid));
+            setSearchResults(filtered);
+        } catch (err) {
+            console.error("Search failed", err);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleAddRegisteredPlayer = (dbPlayer) => {
+        if (!activeTeamId) return;
+        const updated = teams.map(t => {
+            if (t.id === activeTeamId) {
+                if (t.players.some(p => p.tid === dbPlayer.tid)) return t;
+                return { ...t, players: [...t.players, {
+                    tid: dbPlayer.tid,
+                    name: dbPlayer.name,
+                    role: dbPlayer.role || 'Player',
+                    profilePic: dbPlayer.profilePic || ''
+                }] };
+            }
+            return t;
+        });
+        saveTeams(updated);
+        setNewPlayerName('');
+        setSearchResults([]);
     };
 
     const handleRemovePlayer = (teamId, playerId) => {
@@ -164,19 +209,38 @@ const Teams = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 mb-8">
-                                    <input
-                                        placeholder="Add player name..."
-                                        className="flex-1 bg-slate-50 p-5 rounded-2xl text-sm font-bold outline-none placeholder:text-slate-300 border border-slate-100 focus:border-red-600/30 transition-all shadow-inner"
-                                        value={newPlayerName}
-                                        onChange={(e) => setNewPlayerName(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
-                                    />
+                                <div className="flex gap-3 mb-8 relative">
+                                    <div className="flex-1 relative">
+                                        <input
+                                            placeholder="Search DB or type guest name..."
+                                            className="w-full bg-slate-50 p-5 rounded-2xl text-sm font-bold outline-none placeholder:text-slate-300 border border-slate-100 focus:border-red-600/30 transition-all shadow-inner"
+                                            value={newPlayerName}
+                                            onChange={handleSearchChange}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
+                                        />
+                                        {searchResults.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-64 overflow-y-auto no-scrollbar">
+                                                {searchResults.map(p => (
+                                                    <div 
+                                                        key={p.tid} 
+                                                        onClick={() => handleAddRegisteredPlayer(p)}
+                                                        className="flex items-center gap-4 p-4 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
+                                                    >
+                                                        <img src={p.profilePic || 'https://cdn-icons-png.flaticon.com/512/1144/1144760.png'} alt={p.name} className="w-10 h-10 rounded-full object-cover" />
+                                                        <div>
+                                                            <p className="font-bold text-slate-700 text-sm">{p.name}</p>
+                                                            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">{p.tid}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                     <button
                                         onClick={handleAddPlayer}
-                                        className="px-8 bg-red-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30"
+                                        className="px-8 bg-slate-900 text-white font-black uppercase tracking-widest text-xs rounded-2xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/30 whitespace-nowrap"
                                     >
-                                        Add Player
+                                        Add Guest
                                     </button>
                                 </div>
 
