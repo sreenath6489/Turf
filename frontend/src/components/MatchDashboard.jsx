@@ -1216,7 +1216,115 @@ const MatchDashboard = () => {
             if (topFielder) bestFielder = { name: topFielder, dismissals: maxCatches };
         }
 
-            let themeClasses = "bg-[#FAF4EA] text-slate-900"; // classic
+    const renderGrandReportInnings = (dataToRender, teamName) => {
+        if (!dataToRender) return null;
+
+        let allBatsmen = [...(dataToRender.batsmanStats || [])];
+        const existingBatIds = allBatsmen.map(b => b.tid);
+        if (dataToRender.currentBatsmen?.striker && !existingBatIds.includes(dataToRender.currentBatsmen.striker.tid)) {
+            allBatsmen.push({ ...dataToRender.currentBatsmen.striker, dismissal: 'not out' });
+        }
+        if (dataToRender.currentBatsmen?.nonStriker && !existingBatIds.includes(dataToRender.currentBatsmen.nonStriker.tid)) {
+            allBatsmen.push({ ...dataToRender.currentBatsmen.nonStriker, dismissal: 'not out' });
+        }
+
+        const battedIds = allBatsmen.map(b => b.tid);
+        const currentBattingTeam = (dataToRender === match.firstInningsData) ? (match.innings === 1 ? match.battingTeam : match.bowlingTeam) : match.battingTeam;
+        const yetToBat = currentBattingTeam?.players?.filter(p => !battedIds.includes(p.tid)) || [];
+
+        let allBowlers = [...(dataToRender.bowlerStats || [])];
+        if (dataToRender.currentBowler && dataToRender.currentBowler.balls > 0) {
+            const existing = allBowlers.findIndex(b => b.tid === dataToRender.currentBowler.tid);
+            if (existing >= 0) allBowlers[existing] = dataToRender.currentBowler;
+            else allBowlers.push(dataToRender.currentBowler);
+        }
+
+        const ext = dataToRender.extras || { wides: 0, noBalls: 0, byes: 0, legByes: 0 };
+        const totalExtras = ext.wides + ext.noBalls + ext.byes + ext.legByes;
+
+        return (
+            <div className="border border-slate-200 rounded-3xl p-8 bg-white flex flex-col h-full shadow-sm">
+                <h3 className="text-xl font-bold text-[#0f172a] uppercase text-center mb-8 tracking-widest">{teamName} INNINGS</h3>
+                
+                <h4 className="font-bold text-[#0f172a] uppercase tracking-widest text-sm mb-4">BATTING</h4>
+                <table className="w-full text-left text-sm mb-2">
+                    <thead>
+                        <tr className="text-[10px] text-slate-500 uppercase tracking-widest border-b border-slate-200">
+                            <th className="pb-3 font-bold w-1/2">BATTER</th>
+                            <th className="pb-3 text-right font-bold w-8">R</th>
+                            <th className="pb-3 text-right font-bold w-8">B</th>
+                            <th className="pb-3 text-right font-bold w-8">4S</th>
+                            <th className="pb-3 text-right font-bold w-8">6S</th>
+                            <th className="pb-3 text-right font-bold w-12">SR</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {allBatsmen.map((b, i) => (
+                            <tr key={i}>
+                                <td className="py-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-[#0f172a]">{b.name}</span>
+                                        {dataToRender.currentBatsmen?.striker?.tid === b.tid && <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] rotate-45"><path d="M19 3l2 2-14 14-2-2L19 3z"/></svg>}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 leading-tight mt-1">{b.dismissal || 'not out'}</div>
+                                </td>
+                                <td className="py-3 text-right font-bold text-[#0f172a]">{b.runs}</td>
+                                <td className="py-3 text-right text-slate-600">{b.balls}</td>
+                                <td className="py-3 text-right text-slate-600">{b.fours}</td>
+                                <td className="py-3 text-right text-slate-600">{b.sixes}</td>
+                                <td className="py-3 text-right text-slate-600">{getStrikeRate(b.runs, b.balls)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <div className="border-y border-slate-200 py-4 flex justify-between items-center text-sm mb-4">
+                    <span className="font-bold text-[#0f172a]">Extras</span>
+                    <span className="font-bold text-[#0f172a]">{totalExtras} <span className="text-slate-500 font-normal ml-1">(W {ext.wides}, NB {ext.noBalls}, B {ext.byes}, LB {ext.legByes})</span></span>
+                </div>
+                
+                <div className="flex justify-between items-center text-lg mb-8">
+                    <span className="font-black text-[#0f172a]">Total</span>
+                    <span className="font-black text-[#0f172a]">{dataToRender.score} <span className="text-slate-500 font-normal text-sm ml-1">({dataToRender.wickets} wkts, {formatOvers(dataToRender.balls)} ov)</span></span>
+                </div>
+
+                {yetToBat.length > 0 && (
+                    <div className="mb-8">
+                        <p className="font-bold text-[#0f172a] uppercase tracking-widest text-[10px] mb-2">YET TO BAT</p>
+                        <p className="text-sm text-slate-600">{yetToBat.map(p => p.name).join('  •  ')}</p>
+                    </div>
+                )}
+
+                <h4 className="font-bold text-[#0f172a] uppercase tracking-widest text-sm mb-4">BOWLING</h4>
+                <table className="w-full text-left text-sm">
+                    <thead>
+                        <tr className="text-[10px] text-slate-500 uppercase tracking-widest border-b border-slate-200">
+                            <th className="pb-3 font-bold w-1/2">BOWLER</th>
+                            <th className="pb-3 text-right font-bold w-8">O</th>
+                            <th className="pb-3 text-right font-bold w-8">M</th>
+                            <th className="pb-3 text-right font-bold w-8">R</th>
+                            <th className="pb-3 text-right font-bold w-8">W</th>
+                            <th className="pb-3 text-right font-bold w-12">ECON</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {allBowlers.map((b, i) => (
+                            <tr key={i}>
+                                <td className="py-3 font-bold text-[#0f172a]">{b.name}</td>
+                                <td className="py-3 text-right text-slate-600">{formatOvers(b.balls)}</td>
+                                <td className="py-3 text-right text-slate-600">{b.maidens || 0}</td>
+                                <td className="py-3 text-right font-bold text-[#0f172a]">{b.runs}</td>
+                                <td className="py-3 text-right font-bold text-[#0f172a]">{b.wickets}</td>
+                                <td className="py-3 text-right text-slate-600">{getEcon(b.runs, b.balls)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
+        let themeClasses = "bg-[#FAF4EA] text-slate-900"; // classic
         if (theme === 'csk') themeClasses = "bg-yellow-400 text-slate-900";
         if (theme === 'rcb') themeClasses = "bg-red-900 text-white";
         if (theme === 'mi') themeClasses = "bg-blue-800 text-white";
@@ -1858,52 +1966,57 @@ const MatchDashboard = () => {
             {/* HIDDEN GRAND REPORT CANVAS FOR EXPORT */}
             {match.isCompleted && (
                 <div className="fixed top-[20000px] left-[-9999px] overflow-visible no-print">
-                    <div ref={grandReportRef} className="bg-[#0f172a] text-white p-12 w-[1200px] flex flex-col gap-10 font-sans border-8 border-[#1e293b]">
-                        <div className="text-center border-b border-white/10 pb-10">
-                            <h1 className="text-6xl font-black italic uppercase text-white mb-6 tracking-tight">Turf Score <span className="text-indigo-500">Pro</span></h1>
-                            <h2 className="text-5xl font-black text-indigo-400 uppercase tracking-widest drop-shadow-md">{calculateMatchResult()}</h2>
-                            <p className="text-slate-300 mt-6 text-2xl italic leading-relaxed px-20">"{matchSummary || 'A brilliant display of turf cricket!'}"</p>
+                    <div ref={grandReportRef} className="bg-white text-slate-900 w-[1200px] flex flex-col font-sans pt-16 pb-12">
+                        <div className="text-center px-20">
+                            <h1 className="text-6xl font-black text-[#0f172a] uppercase tracking-wide mb-6">TURF SCORE PRO</h1>
+                            <h2 className="text-4xl font-bold text-[#0f172a] uppercase tracking-wide mb-8">{calculateMatchResult()}</h2>
+                            <p className="text-2xl text-slate-600 italic font-medium leading-relaxed px-10">"{matchSummary || 'What a phenomenal match! Both teams fought hard till the very end, but only one could emerge victorious on this beautiful day of turf cricket.'}"</p>
                         </div>
+                        
+                        <hr className="border-t border-slate-200 my-12 mx-12" />
 
-                        <div className="grid grid-cols-3 gap-8">
+                        <div className="grid grid-cols-3 gap-8 px-12 mb-12">
                             {(()=>{
                                 const awards = calculateAwards();
                                 if(!awards) return null;
                                 return (
                                     <>
-                                    <div className="bg-slate-800 p-8 rounded-[2rem] text-center border-2 border-yellow-500/30 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl"></div>
-                                        <span className="text-6xl">🌟</span><p className="text-yellow-500 text-sm font-black uppercase tracking-widest mt-4 mb-2 relative z-10">MVP</p>
-                                        <p className="text-4xl font-black italic relative z-10 text-white">{awards.mvp?.name}</p><p className="text-slate-400 text-lg mt-2 relative z-10">{awards.mvp?.points} Points</p>
+                                    <div className="border border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                        </svg>
+                                        <p className="font-bold text-sm text-[#0f172a] mb-4 uppercase tracking-widest">MVP</p>
+                                        <p className="text-4xl font-black italic text-[#0f172a] mb-3">{awards.mvp?.name || 'Player'}</p>
+                                        <p className="text-slate-600 text-xl">{awards.mvp?.points || 0} Points</p>
                                     </div>
-                                    <div className="bg-slate-800 p-8 rounded-[2rem] text-center border-2 border-orange-500/30 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
-                                        <span className="text-6xl">🧢</span><p className="text-orange-500 text-sm font-black uppercase tracking-widest mt-4 mb-2 relative z-10">Orange Cap</p>
-                                        <p className="text-4xl font-black italic relative z-10 text-white">{awards.orange?.name}</p><p className="text-slate-400 text-lg mt-2 relative z-10">{awards.orange?.runs} Runs</p>
+                                    <div className="border border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                            <path d="M12 6c-3.87 0-7 3.13-7 7H2v3h20v-3h-3c0-3.87-3.13-7-7-7z"/>
+                                        </svg>
+                                        <p className="font-bold text-sm text-[#0f172a] mb-4 uppercase tracking-widest">ORANGE CAP</p>
+                                        <p className="text-4xl font-black italic text-[#0f172a] mb-3">{awards.orange?.name || 'Player'}</p>
+                                        <p className="text-slate-600 text-xl">{awards.orange?.runs || 0} Runs</p>
                                     </div>
-                                    <div className="bg-slate-800 p-8 rounded-[2rem] text-center border-2 border-purple-500/30 relative overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
-                                        <span className="text-6xl">🧢</span><p className="text-purple-500 text-sm font-black uppercase tracking-widest mt-4 mb-2 relative z-10">Purple Cap</p>
-                                        <p className="text-4xl font-black italic relative z-10 text-white">{awards.purple?.name}</p><p className="text-slate-400 text-lg mt-2 relative z-10">{awards.purple?.wickets} Wickets</p>
+                                    <div className="border border-slate-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-sm">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                            <path d="M12 6c-3.87 0-7 3.13-7 7H2v3h20v-3h-3c0-3.87-3.13-7-7-7z"/>
+                                        </svg>
+                                        <p className="font-bold text-sm text-[#0f172a] mb-4 uppercase tracking-widest">PURPLE CAP</p>
+                                        <p className="text-4xl font-black italic text-[#0f172a] mb-3">{awards.purple?.name || 'Player'}</p>
+                                        <p className="text-slate-600 text-xl">{awards.purple?.wickets || 0} Wickets</p>
                                     </div>
                                     </>
                                 )
                             })()}
                         </div>
 
-                        <div className="flex gap-8">
-                            <div className="flex-1 bg-slate-800 rounded-[2.5rem] p-10 border border-white/5">
-                                <h2 className="text-3xl font-black italic uppercase text-slate-200 mb-6 tracking-widest text-center">{match.bowlingTeam?.name} Innings</h2>
-                                {renderInningsScorecard(match.firstInningsData, true)}
-                            </div>
-                            <div className="flex-1 bg-slate-800 rounded-[2.5rem] p-10 border border-white/5">
-                                <h2 className="text-3xl font-black italic uppercase text-slate-200 mb-6 tracking-widest text-center">{match.battingTeam?.name} Innings</h2>
-                                {renderInningsScorecard(match, false)}
-                            </div>
+                        <div className="grid grid-cols-2 gap-8 px-12 mb-16">
+                            {renderGrandReportInnings(match.firstInningsData, match.bowlingTeam?.name)}
+                            {renderGrandReportInnings(match, match.battingTeam?.name)}
                         </div>
 
-                        <div className="text-center text-slate-500 font-bold tracking-[0.3em] uppercase text-sm mt-4">
-                            Generated by Turf Score Pro
+                        <div className="text-center font-bold text-[#0f172a] text-[12px] tracking-[0.4em] uppercase pt-4">
+                            GENERATED BY TURF SCORE PRO
                         </div>
                     </div>
                 </div>
