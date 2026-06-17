@@ -301,19 +301,19 @@ const MatchDashboard = () => {
         let allBowlers = [...(match.firstInningsData?.bowlerStats || []), ...(match.bowlerStats || [])];
 
         let playerStatsMap = {};
-        const getMap = (name) => {
-            if (!playerStatsMap[name]) playerStatsMap[name] = { name, runs: 0, wickets: 0, points: 0 };
+        const getMap = (name, tid) => {
+            if (!playerStatsMap[name]) playerStatsMap[name] = { name, tid, runs: 0, wickets: 0, points: 0 };
             return playerStatsMap[name];
         };
 
         allBatsmen.forEach(b => {
-            let p = getMap(b.name);
+            let p = getMap(b.name, b.tid);
             p.runs += b.runs;
             p.points += b.runs;
         });
 
         allBowlers.forEach(b => {
-            let p = getMap(b.name);
+            let p = getMap(b.name, b.tid);
             p.wickets += b.wickets;
             p.points += (b.wickets * 15);
         });
@@ -323,7 +323,21 @@ const MatchDashboard = () => {
 
         let orange = players.reduce((prev, current) => (prev.runs > current.runs) ? prev : current);
         let purple = players.reduce((prev, current) => (prev.wickets > current.wickets) ? prev : current);
-        let mvp = players.reduce((prev, current) => (prev.points > current.points) ? prev : current);
+        
+        let winningTeam = null;
+        const t1Score = match.firstInningsData?.score || 0;
+        const t2Score = match.score || 0;
+        if (t2Score > t1Score) winningTeam = match.battingTeam;
+        else if (t1Score > t2Score) winningTeam = match.bowlingTeam;
+
+        let eligibleMvpPlayers = players;
+        if (winningTeam) {
+            const winningTids = winningTeam.players.map(p => p.tid);
+            eligibleMvpPlayers = players.filter(p => winningTids.includes(p.tid));
+        }
+        if (eligibleMvpPlayers.length === 0) eligibleMvpPlayers = players;
+
+        let mvp = eligibleMvpPlayers.reduce((prev, current) => (prev.points > current.points) ? prev : current);
 
         return { orange, purple, mvp };
     };
@@ -1564,11 +1578,9 @@ const MatchDashboard = () => {
                     {activeTab === 'GRAND_ANALYTICS' && match.isCompleted && (
                         <div className="flex flex-col gap-6 w-full animate-in zoom-in-95 duration-500">
                             {/* AI Summary */}
-                            <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] p-8 md:p-12 rounded-[3rem] shadow-2xl border border-white/5 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
-                                <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"></div>
-                                <h3 className="text-indigo-400 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-4 relative z-10">Gemini AI Match Story</h3>
-                                <p className="text-white text-xl md:text-2xl font-black italic leading-relaxed relative z-10">"{matchSummary || 'Gemini AI is writing the match story...'}"</p>
+                            <div className="bg-white p-8 md:p-12 rounded-[3rem] shadow-sm border border-slate-200 text-center">
+                                <h3 className="text-[#0f172a] text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mb-4">Gemini AI Match Story</h3>
+                                <p className="text-slate-600 text-xl md:text-2xl italic font-medium leading-relaxed px-4 md:px-10">"{matchSummary || 'Gemini AI is writing the match story...'}"</p>
                             </div>
 
                             {/* MVP & Caps */}
@@ -1577,43 +1589,46 @@ const MatchDashboard = () => {
                                 if(!awards) return null;
                                 return (
                                     <>
-                                        <div className="bg-gradient-to-br from-yellow-400 to-amber-600 p-1.5 rounded-[3.2rem] shadow-[0_0_80px_rgba(245,158,11,0.2)]">
-                                            <div className="bg-slate-900 p-8 md:p-12 rounded-[3rem] text-center relative overflow-hidden">
-                                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-yellow-500/10 blur-[100px] rounded-full"></div>
-                                                <div className="text-8xl relative z-10 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]">🌟</div>
-                                                <h3 className="text-yellow-500 text-xs font-black uppercase tracking-[0.4em] mt-6 mb-2 relative z-10">Player of the Match (MVP)</h3>
-                                                <p className="text-5xl md:text-6xl font-black italic text-white uppercase relative z-10 drop-shadow-md">{awards.mvp?.name}</p>
-                                                <div className="inline-flex mt-6 gap-4 bg-black/30 backdrop-blur-md px-8 py-3 rounded-full relative z-10 border border-white/5">
-                                                    <span className="text-yellow-100 font-bold text-sm">{awards.mvp?.runs} Runs</span>
-                                                    <span className="text-yellow-500/30 font-black">•</span>
-                                                    <span className="text-yellow-100 font-bold text-sm">{awards.mvp?.wickets} Wickets</span>
-                                                    <span className="text-yellow-500/30 font-black">•</span>
-                                                    <span className="text-yellow-400 font-black text-sm">{awards.mvp?.points} MVP Points</span>
-                                                </div>
-                                                <div className="mt-8 relative z-10">
-                                                    <button onClick={() => handleGenerateCard(awards.mvp)} className="px-8 py-4 bg-white text-slate-900 font-black uppercase tracking-widest text-xs rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10">Generate AI Persona Card</button>
-                                                </div>
+                                        <div className="bg-white p-8 md:p-12 rounded-[3rem] text-center border border-slate-200 shadow-sm flex flex-col items-center">
+                                            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                            </svg>
+                                            <h3 className="text-[#0f172a] text-xs font-black uppercase tracking-[0.4em] mb-2">Player of the Match (MVP)</h3>
+                                            <p className="text-5xl md:text-6xl font-black italic text-[#0f172a] uppercase mb-6">{awards.mvp?.name}</p>
+                                            <div className="inline-flex gap-4 border-t border-slate-200 pt-6">
+                                                <span className="text-slate-600 font-bold text-lg">{awards.mvp?.runs} Runs</span>
+                                                <span className="text-slate-300 font-black">•</span>
+                                                <span className="text-slate-600 font-bold text-lg">{awards.mvp?.wickets} Wickets</span>
+                                                <span className="text-slate-300 font-black">•</span>
+                                                <span className="text-[#0f172a] font-black text-lg">{awards.mvp?.points} MVP Points</span>
+                                            </div>
+                                            <div className="mt-8">
+                                                <button onClick={() => handleGenerateCard(awards.mvp)} className="px-8 py-4 bg-[#0f172a] text-white font-black uppercase tracking-widest text-xs rounded-full hover:bg-slate-800 transition-all shadow-md">Generate AI Persona Card</button>
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {/* Orange Cap */}
-                                            <div className="bg-gradient-to-br from-orange-500 to-orange-700 p-10 rounded-[3rem] shadow-xl text-center relative overflow-hidden group">
-                                                <div className="absolute -top-12 -right-12 text-[150px] opacity-20 group-hover:scale-110 transition-transform duration-700">🧢</div>
-                                                <h3 className="text-orange-200 text-xs font-black uppercase tracking-[0.3em] mb-2 relative z-10">Orange Cap</h3>
-                                                <p className="text-4xl font-black italic text-white uppercase relative z-10 mb-4">{awards.orange?.name}</p>
-                                                <div className="bg-black/20 rounded-full px-6 py-3 inline-block relative z-10 backdrop-blur-sm border border-white/10">
-                                                    <span className="text-orange-200 font-black">{awards.orange?.runs} Runs</span>
+                                            <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm text-center flex flex-col items-center">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                                    <path d="M12 6c-3.87 0-7 3.13-7 7H2v3h20v-3h-3c0-3.87-3.13-7-7-7z"/>
+                                                </svg>
+                                                <h3 className="text-[#0f172a] text-xs font-black uppercase tracking-[0.3em] mb-2">Orange Cap</h3>
+                                                <p className="text-4xl font-black italic text-[#0f172a] uppercase mb-4">{awards.orange?.name}</p>
+                                                <div className="border-t border-slate-200 pt-4 w-full">
+                                                    <span className="text-slate-600 font-bold text-xl">{awards.orange?.runs} Runs</span>
                                                 </div>
                                             </div>
 
                                             {/* Purple Cap */}
-                                            <div className="bg-gradient-to-br from-purple-500 to-purple-800 p-10 rounded-[3rem] shadow-xl text-center relative overflow-hidden group">
-                                                <div className="absolute -top-12 -right-12 text-[150px] opacity-20 group-hover:scale-110 transition-transform duration-700">🧢</div>
-                                                <h3 className="text-purple-200 text-xs font-black uppercase tracking-[0.3em] mb-2 relative z-10">Purple Cap</h3>
-                                                <p className="text-4xl font-black italic text-white uppercase relative z-10 mb-4">{awards.purple?.name}</p>
-                                                <div className="bg-black/20 rounded-full px-6 py-3 inline-block relative z-10 backdrop-blur-sm border border-white/10">
-                                                    <span className="text-purple-200 font-black">{awards.purple?.wickets} Wickets</span>
+                                            <div className="bg-white border border-slate-200 p-10 rounded-[3rem] shadow-sm text-center flex flex-col items-center">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" className="text-[#0f172a] mb-6">
+                                                    <path d="M12 6c-3.87 0-7 3.13-7 7H2v3h20v-3h-3c0-3.87-3.13-7-7-7z"/>
+                                                </svg>
+                                                <h3 className="text-[#0f172a] text-xs font-black uppercase tracking-[0.3em] mb-2">Purple Cap</h3>
+                                                <p className="text-4xl font-black italic text-[#0f172a] uppercase mb-4">{awards.purple?.name}</p>
+                                                <div className="border-t border-slate-200 pt-4 w-full">
+                                                    <span className="text-slate-600 font-bold text-xl">{awards.purple?.wickets} Wickets</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1621,7 +1636,7 @@ const MatchDashboard = () => {
                                 )
                             })()}
 
-                            <button onClick={downloadGrandReport} className="mt-8 p-6 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-[2.5rem] font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-600/30 w-full hover:scale-[1.02] active:scale-95 transition-all text-sm flex items-center justify-center gap-4 border border-white/10">
+                            <button onClick={downloadGrandReport} className="mt-8 p-6 bg-white border-2 border-[#0f172a] text-[#0f172a] rounded-[2.5rem] font-black uppercase tracking-[0.2em] shadow-sm w-full hover:bg-slate-50 transition-all text-sm flex items-center justify-center gap-4">
                                 <span className="text-2xl">📥</span>
                                 <span>Download Complete Match Report</span>
                             </button>
