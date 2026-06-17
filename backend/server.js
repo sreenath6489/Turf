@@ -198,6 +198,21 @@ app.get('/api/matches/:id', async (req, res) => {
     }
 });
 
+// Delete Match by ID (Temporary Admin Tool)
+app.delete('/api/matches/:id', async (req, res) => {
+    try {
+        const match = await Match.findByIdAndDelete(req.params.id);
+        if (match) {
+            io.emit('matchDeleted', req.params.id); // Notify clients if needed
+            res.json({ success: true, message: "Match deleted" });
+        } else {
+            res.status(404).json({ success: false, message: "Match not found" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error deleting match" });
+    }
+});
+
 // GET PLAYER STATS AGGREGATED
 app.get('/api/players/stats/:tid', async (req, res) => {
     try {

@@ -10,6 +10,7 @@ const Home = () => {
     const [liveMatches, setLiveMatches] = useState([]);
     const [history, setHistory] = useState([]);
     const [commentaryMode, setCommentaryMode] = useState(localStorage.getItem('commentaryMode') || 'AI');
+    const [deleteMode, setDeleteMode] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -60,6 +61,21 @@ const Home = () => {
     const handleModeToggle = (mode) => {
         setCommentaryMode(mode);
         localStorage.setItem('commentaryMode', mode);
+    };
+
+    const handleDeleteMatch = async (e, matchId) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to permanently delete this test match?")) return;
+        try {
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/${matchId}`);
+            if (res.data.success) {
+                setLiveMatches(prev => prev.filter(m => m._id !== matchId));
+                setHistory(prev => prev.filter(m => m._id !== matchId));
+            }
+        } catch (err) {
+            console.error("Failed to delete match", err);
+            alert("Failed to delete match");
+        }
     };
 
     if (!user) return null;
@@ -118,14 +134,25 @@ const Home = () => {
                         </button>
                     </div>
                 </div>
-                <button
-                    onClick={() => { localStorage.clear(); navigate('/'); }}
-                    className="bg-white hover:bg-red-50 border border-red-900/10 p-2 rounded-xl transition-all shadow-sm"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                </button>
+                <div className="flex">
+                    <button
+                        onClick={() => setDeleteMode(!deleteMode)}
+                        className={`border p-2 rounded-xl transition-all shadow-sm flex items-center justify-center mr-2 ${deleteMode ? 'bg-red-600 text-white border-red-700' : 'bg-white text-red-600 hover:bg-red-50 border-red-900/10'}`}
+                        title="Toggle Delete Mode"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                    <button
+                        onClick={() => { localStorage.clear(); navigate('/'); }}
+                        className="bg-white hover:bg-red-50 border border-red-900/10 p-2 rounded-xl transition-all shadow-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {/* Main Action Cards */}
@@ -181,6 +208,14 @@ const Home = () => {
                             >
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="flex items-center gap-2">
+                                        {deleteMode && (
+                                            <button 
+                                                onClick={(e) => handleDeleteMatch(e, match._id)}
+                                                className="bg-red-600 hover:bg-red-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black mr-2 z-10 shadow-md"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
                                         <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{match.overs} Overs Match</span>
                                         <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">• {getMatchDate(match._id)}</span>
                                     </div>
@@ -227,9 +262,19 @@ const Home = () => {
                                     className="bg-white border border-red-900/10 shadow-sm p-5 rounded-3xl hover:border-red-600/30 transition-all cursor-pointer"
                                 >
                                     <div className="flex justify-between items-center mb-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{match.teamA.name} vs {match.teamB.name}</span>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{getMatchDate(match._id)}</span>
+                                        <div className="flex items-center gap-2">
+                                            {deleteMode && (
+                                                <button 
+                                                    onClick={(e) => handleDeleteMatch(e, match._id)}
+                                                    className="bg-red-600 hover:bg-red-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black z-10 shadow-md shrink-0"
+                                                >
+                                                    ✕
+                                                </button>
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{match.teamA.name} vs {match.teamB.name}</span>
+                                                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{getMatchDate(match._id)}</span>
+                                            </div>
                                         </div>
                                         <span className="bg-stone-100 text-slate-500 border border-slate-200 text-[8px] font-black px-2 py-0.5 rounded uppercase">Completed</span>
                                     </div>
