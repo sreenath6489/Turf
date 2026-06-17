@@ -40,8 +40,8 @@ const MatchDashboard = () => {
         setToast({ message, type });
         
         // AI Commentary Voice Trigger
-        const mode = localStorage.getItem('commentaryMode') || 'AI';
-        if (mode === 'AI') {
+        const mode = localStorage.getItem('commentaryMode') || 'RAVI';
+        if (mode === 'SYSTEMATIC' || mode === 'RAVI') {
             speakCommentary(message);
         }
 
@@ -159,7 +159,7 @@ const MatchDashboard = () => {
     const [history, setHistory] = useState([]);
     const [activeTab, setActiveTab] = useState('LIVE');
     const [pinnedIPL, setPinnedIPL] = useState(null);
-    const [commentaryMode, setCommentaryMode] = useState(() => localStorage.getItem('commentaryMode') || 'AI');
+    const [commentaryMode, setCommentaryMode] = useState(() => localStorage.getItem('commentaryMode') || 'RAVI');
     const [soundMuted, setSoundMuted] = useState(() => localStorage.getItem('soundMuted') === 'true');
     const [showSummary, setShowSummary] = useState(false);
 
@@ -251,10 +251,10 @@ const MatchDashboard = () => {
 
         socket.on('newCommentary', (data) => {
             if (!data.text) return;
-            const mode = localStorage.getItem('commentaryMode') || 'AI';
+            const mode = localStorage.getItem('commentaryMode') || 'RAVI';
             if (mode !== 'OFF') {
                 setCommentary(data.text);
-                if (mode === 'AI') {
+                if (mode === 'SYSTEMATIC' || mode === 'RAVI') {
                     speakCommentary(data.text);
                 }
             }
@@ -1263,6 +1263,21 @@ const MatchDashboard = () => {
                         <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full opacity-100 transition-opacity">PRO</div>
                         👑
                     </button>
+                </div>
+
+                {/* Commentary Mode Selector */}
+                <div className="flex justify-end px-2 -mt-2">
+                    <select 
+                        value={commentaryMode} 
+                        onChange={(e) => handleModeToggle(e.target.value)}
+                        className="bg-white border-2 border-slate-100 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-600 rounded-full px-4 py-2 outline-none hover:border-slate-300 transition-all cursor-pointer shadow-sm shadow-slate-200/50 appearance-none text-center"
+                        style={{ textAlignLast: 'center' }}
+                    >
+                        <option value="RAVI">🎙️ Ravi Shastri (AI)</option>
+                        <option value="TELUGU">😂 Telugu Memes</option>
+                        <option value="SYSTEMATIC">🤖 Systematic AI</option>
+                        <option value="OFF">🔇 Commentary Off</option>
+                    </select>
                 </div>
 
                 <div className="flex-1">
