@@ -55,9 +55,23 @@ const Signup = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-black p-6 relative overflow-hidden font-sans">
+            {/* VIDEO BACKGROUND */}
+            <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover z-0 opacity-35 pointer-events-none"
+            >
+                <source src="/background.mp4" type="video/mp4" />
+            </video>
+
+            {/* DARK TRANSPARENT OVERLAY */}
+            <div className="absolute inset-0 bg-black/60 z-0 pointer-events-none"></div>
+
             {/* Background elements */}
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
             <div className="w-full max-w-md z-10">
                 <div className="text-center mb-10">
