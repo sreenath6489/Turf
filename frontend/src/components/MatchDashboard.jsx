@@ -22,7 +22,7 @@ const MatchDashboard = () => {
     const [activeModal, setActiveModal] = useState(null);
     const [playerCardData, setPlayerCardData] = useState(null);
     const [isCardLoading, setIsCardLoading] = useState(false);
-    const [theme, setTheme] = useState(localStorage.getItem('turf_theme') || 'classic');
+    const [theme, setTheme] = useState(localStorage.getItem('turf_theme') || 'dark');
     const [soundPack, setSoundPack] = useState(localStorage.getItem('turf_sound') || 'classic');
     const [matchSummary, setMatchSummary] = useState(null);
     const [tempValue, setTempValue] = useState(0);
@@ -1345,7 +1345,7 @@ const MatchDashboard = () => {
         if (theme === 'dark') themeClasses = "bg-slate-900 text-white";
 
         return (
-        <div className={`min-h-screen ${themeClasses} font-sans flex flex-col items-center p-4 md:p-8 transition-colors duration-500`}>
+        <div className={`min-h-screen ${themeClasses} theme-${theme} font-sans flex flex-col items-center p-4 md:p-8 transition-colors duration-500`}>
             <div className="w-full max-w-4xl flex flex-col gap-6">
                 
                 {/* Top Nav Pill */}
