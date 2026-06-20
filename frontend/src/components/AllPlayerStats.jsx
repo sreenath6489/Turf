@@ -73,7 +73,7 @@ const AllPlayerStats = () => {
                         className="w-full bg-white/[0.02] border border-white/10 rounded-2xl py-3 px-4 pl-10 text-sm outline-none focus:border-emerald-500/50 transition-colors font-semibold"
                     />
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3.5 top-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}.5 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
             </div>
