@@ -164,7 +164,7 @@ const Home = () => {
                 </div>
 
                 {/* Main Action Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                     <div
                         onClick={() => navigate('/create-match')}
                         className="relative overflow-hidden bg-gradient-to-br from-red-500 to-rose-700 group rounded-[2.5rem] p-6 h-36 flex flex-col justify-between cursor-pointer shadow-xl hover:scale-[0.99] transition-all duration-300 border border-white/10 glow-red animate-in slide-in-from-bottom duration-500"
@@ -194,6 +194,22 @@ const Home = () => {
                         <div>
                             <h2 className="text-2xl font-black text-white uppercase italic tracking-tight font-display">Manage Teams</h2>
                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 font-display">Build your squads ➔</p>
+                        </div>
+                    </div>
+
+                    <div
+                        onClick={() => navigate('/all-stats')}
+                        className="relative overflow-hidden bg-white/[0.02] hover:bg-white/[0.05] group rounded-[2.5rem] p-6 h-36 flex flex-col justify-between cursor-pointer shadow-xl hover:scale-[0.99] transition-all duration-300 border border-white/10 animate-in slide-in-from-bottom duration-500 delay-100"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div className="inline-flex items-center gap-1.5 bg-white/5 backdrop-blur-md text-emerald-400 text-[8px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider font-display border border-white/5">
+                                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Analytics
+                            </div>
+                            <span className="text-3xl opacity-40 group-hover:opacity-85 transition-opacity duration-300">📊</span>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-white uppercase italic tracking-tight font-display">Squad Stats</h2>
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 font-display">Compare player performance ➔</p>
                         </div>
                     </div>
                 </div>

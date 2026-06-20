@@ -217,13 +217,19 @@ app.delete('/api/matches/:id', async (req, res) => {
 app.get('/api/players/stats/:tid', async (req, res) => {
     try {
         const { tid } = req.params;
+        // Query ALL matches where this player has participated in any capacity (active or completed)
         const matches = await Match.find({
-            isCompleted: true,
             $or: [
                 { "batsmanStats.tid": tid },
                 { "bowlerStats.tid": tid },
+                { "currentBatsmen.striker.tid": tid },
+                { "currentBatsmen.nonStriker.tid": tid },
+                { "currentBowler.tid": tid },
                 { "firstInningsData.batsmanStats.tid": tid },
-                { "firstInningsData.bowlerStats.tid": tid }
+                { "firstInningsData.bowlerStats.tid": tid },
+                { "firstInningsData.currentBatsmen.striker.tid": tid },
+                { "firstInningsData.currentBatsmen.nonStriker.tid": tid },
+                { "firstInningsData.currentBowler.tid": tid }
             ]
         });
 
@@ -236,52 +242,87 @@ app.get('/api/players/stats/:tid', async (req, res) => {
         matches.forEach(m => {
             const dateObj = m._id.getTimestamp();
             const dateStr = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
-            let matchEntry = { date: dateStr, runs: 0, wickets: 0 };
             
-            // Batting (Check both innings)
-            const bat1 = m.firstInningsData?.batsmanStats?.find(b => b.tid === tid);
-            const bat2 = m.batsmanStats?.find(b => b.tid === tid);
-            
-            if (bat1) {
-                stats.batting.totalRuns += bat1.runs;
-                stats.batting.totalBalls += bat1.balls;
-                stats.batting.fours += bat1.fours;
-                stats.batting.sixes += bat1.sixes;
-                stats.batting.innings += 1;
-                stats.batting.highest = Math.max(stats.batting.highest, bat1.runs);
-                matchEntry.runs += bat1.runs;
-            }
-            if (bat2) {
-                stats.batting.totalRuns += bat2.runs;
-                stats.batting.totalBalls += bat2.balls;
-                stats.batting.fours += bat2.fours;
-                stats.batting.sixes += bat2.sixes;
-                stats.batting.innings += 1;
-                stats.batting.highest = Math.max(stats.batting.highest, bat2.runs);
-                matchEntry.runs += bat2.runs;
+            let matchRuns = 0;
+            let matchWickets = 0;
+            let playedInMatch = false;
+
+            // --- BATTING INNINGS 1 ---
+            let bat1 = m.firstInningsData?.batsmanStats?.find(b => b.tid === tid);
+            if (!bat1 && m.firstInningsData?.currentBatsmen) {
+                if (m.firstInningsData.currentBatsmen.striker?.tid === tid) bat1 = m.firstInningsData.currentBatsmen.striker;
+                else if (m.firstInningsData.currentBatsmen.nonStriker?.tid === tid) bat1 = m.firstInningsData.currentBatsmen.nonStriker;
             }
 
-            // Bowling (Check both innings)
-            const bowl1 = m.firstInningsData?.bowlerStats?.find(b => b.tid === tid);
-            const bowl2 = m.bowlerStats?.find(b => b.tid === tid);
+            if (bat1) {
+                stats.batting.totalRuns += (bat1.runs || 0);
+                stats.batting.totalBalls += (bat1.balls || 0);
+                stats.batting.fours += (bat1.fours || 0);
+                stats.batting.sixes += (bat1.sixes || 0);
+                stats.batting.innings += 1;
+                stats.batting.highest = Math.max(stats.batting.highest, bat1.runs || 0);
+                matchRuns += (bat1.runs || 0);
+                playedInMatch = true;
+            }
+
+            // --- BATTING INNINGS 2 / ACTIVE ---
+            let bat2 = m.batsmanStats?.find(b => b.tid === tid);
+            if (!bat2 && m.currentBatsmen) {
+                if (m.currentBatsmen.striker?.tid === tid) bat2 = m.currentBatsmen.striker;
+                else if (m.currentBatsmen.nonStriker?.tid === tid) bat2 = m.currentBatsmen.nonStriker;
+            }
+
+            if (bat2) {
+                stats.batting.totalRuns += (bat2.runs || 0);
+                stats.batting.totalBalls += (bat2.balls || 0);
+                stats.batting.fours += (bat2.fours || 0);
+                stats.batting.sixes += (bat2.sixes || 0);
+                stats.batting.innings += 1;
+                stats.batting.highest = Math.max(stats.batting.highest, bat2.runs || 0);
+                matchRuns += (bat2.runs || 0);
+                playedInMatch = true;
+            }
+
+            // --- BOWLING INNINGS 1 ---
+            let bowl1 = null;
+            if (m.firstInningsData?.currentBowler?.tid === tid) {
+                bowl1 = m.firstInningsData.currentBowler;
+            } else {
+                bowl1 = m.firstInningsData?.bowlerStats?.find(b => b.tid === tid);
+            }
 
             if (bowl1) {
-                stats.bowling.totalWickets += bowl1.wickets;
-                stats.bowling.totalRuns += bowl1.runs;
-                stats.bowling.totalBalls += bowl1.balls;
+                stats.bowling.totalWickets += (bowl1.wickets || 0);
+                stats.bowling.totalRuns += (bowl1.runs || 0);
+                stats.bowling.totalBalls += (bowl1.balls || 0);
                 stats.bowling.innings += 1;
-                matchEntry.wickets += bowl1.wickets;
-            }
-            if (bowl2) {
-                stats.bowling.totalWickets += bowl2.wickets;
-                stats.bowling.totalRuns += bowl2.runs;
-                stats.bowling.totalBalls += bowl2.balls;
-                stats.bowling.innings += 1;
-                matchEntry.wickets += bowl2.wickets;
+                matchWickets += (bowl1.wickets || 0);
+                playedInMatch = true;
             }
 
-            if (bat1 || bat2 || bowl1 || bowl2) {
-                stats.recentForm.push(matchEntry);
+            // --- BOWLING INNINGS 2 / ACTIVE ---
+            let bowl2 = null;
+            if (m.currentBowler?.tid === tid) {
+                bowl2 = m.currentBowler;
+            } else {
+                bowl2 = m.bowlerStats?.find(b => b.tid === tid);
+            }
+
+            if (bowl2) {
+                stats.bowling.totalWickets += (bowl2.wickets || 0);
+                stats.bowling.totalRuns += (bowl2.runs || 0);
+                stats.bowling.totalBalls += (bowl2.balls || 0);
+                stats.bowling.innings += 1;
+                matchWickets += (bowl2.wickets || 0);
+                playedInMatch = true;
+            }
+
+            if (playedInMatch) {
+                stats.recentForm.push({
+                    date: dateStr,
+                    runs: matchRuns,
+                    wickets: matchWickets
+                });
             }
         });
 
@@ -289,6 +330,120 @@ app.get('/api/players/stats/:tid', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Failed to aggregate stats" });
+    }
+});
+
+// GET ALL PLAYERS STATS AGGREGATED
+app.get('/api/players/stats-all', async (req, res) => {
+    try {
+        const players = await Player.find({}).sort({ name: 1 });
+        const matches = await Match.find({}); // Get all matches
+
+        // Build a stats map for each player
+        let allStats = {};
+        players.forEach(p => {
+            allStats[p.tid] = {
+                player: p,
+                batting: { totalRuns: 0, totalBalls: 0, fours: 0, sixes: 0, innings: 0, highest: 0 },
+                bowling: { totalWickets: 0, totalRuns: 0, totalBalls: 0, maidens: 0, innings: 0 },
+                recentForm: []
+            };
+        });
+
+        matches.forEach(m => {
+            const dateObj = m._id.getTimestamp();
+            const dateStr = `${dateObj.getDate()}/${dateObj.getMonth() + 1}`;
+
+            players.forEach(p => {
+                const tid = p.tid;
+                let matchRuns = 0;
+                let matchWickets = 0;
+                let playedInMatch = false;
+
+                // --- BATTING INNINGS 1 ---
+                let bat1 = m.firstInningsData?.batsmanStats?.find(b => b.tid === tid);
+                if (!bat1 && m.firstInningsData?.currentBatsmen) {
+                    if (m.firstInningsData.currentBatsmen.striker?.tid === tid) bat1 = m.firstInningsData.currentBatsmen.striker;
+                    else if (m.firstInningsData.currentBatsmen.nonStriker?.tid === tid) bat1 = m.firstInningsData.currentBatsmen.nonStriker;
+                }
+
+                if (bat1) {
+                    allStats[tid].batting.totalRuns += (bat1.runs || 0);
+                    allStats[tid].batting.totalBalls += (bat1.balls || 0);
+                    allStats[tid].batting.fours += (bat1.fours || 0);
+                    allStats[tid].batting.sixes += (bat1.sixes || 0);
+                    allStats[tid].batting.innings += 1;
+                    allStats[tid].batting.highest = Math.max(allStats[tid].batting.highest, bat1.runs || 0);
+                    matchRuns += (bat1.runs || 0);
+                    playedInMatch = true;
+                }
+
+                // --- BATTING INNINGS 2 / ACTIVE ---
+                let bat2 = m.batsmanStats?.find(b => b.tid === tid);
+                if (!bat2 && m.currentBatsmen) {
+                    if (m.currentBatsmen.striker?.tid === tid) bat2 = m.currentBatsmen.striker;
+                    else if (m.currentBatsmen.nonStriker?.tid === tid) bat2 = m.currentBatsmen.nonStriker;
+                }
+
+                if (bat2) {
+                    allStats[tid].batting.totalRuns += (bat2.runs || 0);
+                    allStats[tid].batting.totalBalls += (bat2.balls || 0);
+                    allStats[tid].batting.fours += (bat2.fours || 0);
+                    allStats[tid].batting.sixes += (bat2.sixes || 0);
+                    allStats[tid].batting.innings += 1;
+                    allStats[tid].batting.highest = Math.max(allStats[tid].batting.highest, bat2.runs || 0);
+                    matchRuns += (bat2.runs || 0);
+                    playedInMatch = true;
+                }
+
+                // --- BOWLING INNINGS 1 ---
+                let bowl1 = null;
+                if (m.firstInningsData?.currentBowler?.tid === tid) {
+                    bowl1 = m.firstInningsData.currentBowler;
+                } else {
+                    bowl1 = m.firstInningsData?.bowlerStats?.find(b => b.tid === tid);
+                }
+
+                if (bowl1) {
+                    allStats[tid].bowling.totalWickets += (bowl1.wickets || 0);
+                    allStats[tid].bowling.totalRuns += (bowl1.runs || 0);
+                    allStats[tid].bowling.totalBalls += (bowl1.balls || 0);
+                    allStats[tid].bowling.innings += 1;
+                    matchWickets += (bowl1.wickets || 0);
+                    playedInMatch = true;
+                }
+
+                // --- BOWLING INNINGS 2 / ACTIVE ---
+                let bowl2 = null;
+                if (m.currentBowler?.tid === tid) {
+                    bowl2 = m.currentBowler;
+                } else {
+                    bowl2 = m.bowlerStats?.find(b => b.tid === tid);
+                }
+
+                if (bowl2) {
+                    allStats[tid].bowling.totalWickets += (bowl2.wickets || 0);
+                    allStats[tid].bowling.totalRuns += (bowl2.runs || 0);
+                    allStats[tid].bowling.totalBalls += (bowl2.balls || 0);
+                    allStats[tid].bowling.innings += 1;
+                    matchWickets += (bowl2.wickets || 0);
+                    playedInMatch = true;
+                }
+
+                if (playedInMatch) {
+                    allStats[tid].recentForm.push({
+                        date: dateStr,
+                        runs: matchRuns,
+                        wickets: matchWickets
+                    });
+                }
+            });
+        });
+
+        res.json(Object.values(allStats));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to aggregate all player stats" });
     }
 });
 
