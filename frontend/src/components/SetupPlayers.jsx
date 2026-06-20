@@ -91,51 +91,52 @@ const SetupPlayers = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FAF4EA] text-slate-900 p-6 md:p-10 font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-[#080B10] text-white p-6 md:p-10 font-sans relative overflow-hidden selection:bg-red-500/20 pb-24">
             {/* PITCH TEXTURE BACKGROUND */}
-            <div className="absolute inset-0 opacity-[0.02] pointer-events-none select-none">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none">
                 <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <rect x="45" y="0" width="10" height="100" fill="currentColor" />
-                    <circle cx="50" cy="50" r="10" stroke="currentColor" fill="none" strokeWidth="0.5" />
+                    <rect x="49" y="0" width="2" height="100" fill="currentColor" />
+                    <circle cx="50" cy="50" r="15" stroke="currentColor" fill="none" strokeWidth="0.3" />
                 </svg>
             </div>
+            <div className="absolute top-1/4 left-0 w-80 h-80 bg-red-500/5 rounded-full blur-[100px] pointer-events-none"></div>
 
             {/* BACK BUTTON */}
-            <button onClick={() => navigate('/home')} className="absolute top-8 left-8 p-4 bg-white border border-red-900/10 rounded-2xl hover:bg-red-50 transition-all shadow-xl z-20">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button onClick={() => navigate('/home')} className="absolute top-8 left-8 p-3.5 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-slate-300 hover:text-white transition-all shadow-xl z-20 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
             </button>
 
             <div className="max-w-6xl mx-auto z-10 relative">
-                <div className="text-center mb-12">
-                    <h2 className="text-5xl font-black italic text-slate-900 uppercase tracking-tighter leading-none">Match<br /><span className="text-red-600">Briefing</span></h2>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-3">Final Strategic Setup</p>
+                <div className="text-center mb-12 animate-in fade-in duration-500">
+                    <h2 className="text-5xl font-black italic text-white uppercase tracking-tighter leading-none font-display">Match<br /><span className="text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.3)]">Briefing</span></h2>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-3">Final Strategic Setup</p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-12 animate-in zoom-in-95 duration-500">
                     {/* BATTING SQUAD SECTION */}
-                    <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-red-900/10 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-1.5 h-full bg-red-600"></div>
+                    <div className="bg-white/[0.02] border border-white/10 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden backdrop-blur-xl glow-red">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
                         <div className="flex justify-between items-center mb-8">
                             <div>
-                                <h3 className="text-3xl font-black uppercase italic leading-none">{state.battingTeam.name}</h3>
-                                <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-1">Batting First</p>
+                                <h3 className="text-3xl font-black uppercase italic leading-none font-display">{state.battingTeam.name}</h3>
+                                <p className="text-[9px] font-black text-red-400 uppercase tracking-widest mt-1.5 font-display">Batting First</p>
                             </div>
-                            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19,2L14,7.29V13.71L19,18.71V2M5,2L10,7.29V13.71L5,18.71V2Z" /></svg>
+                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                <svg className="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M19,2L14,7.29V13.71L19,18.71V2M5,2L10,7.29V13.71L5,18.71V2Z" /></svg>
                             </div>
                         </div>
 
                         <div className="space-y-8">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Striker</label>
-                                <div className="flex flex-wrap gap-2">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-4 font-display">Select Striker</label>
+                                <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto pr-1 no-scrollbar">
                                     {state.battingTeam.players.map(p => (
                                         <button 
                                             key={p.tid} 
                                             onClick={() => setStriker(p)}
-                                            className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${striker?.tid === p.tid ? 'border-red-600 bg-red-600 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-red-200'}`}
+                                            className={`px-5 py-3 rounded-2xl border transition-all font-black uppercase italic text-xs cursor-pointer font-display ${striker?.tid === p.tid ? 'border-red-500 bg-red-500/10 text-red-400 shadow-xl' : 'border-white/5 bg-white/[0.01] text-slate-400 hover:border-white/15'}`}
                                         >
                                             {p.name}
                                         </button>
@@ -144,14 +145,14 @@ const SetupPlayers = () => {
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Non-Striker</label>
-                                <div className="flex flex-wrap gap-2">
+                                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-4 font-display">Select Non-Striker</label>
+                                <div className="flex flex-wrap gap-2 max-h-[150px] overflow-y-auto pr-1 no-scrollbar">
                                     {state.battingTeam.players.map(p => (
                                         <button 
                                             key={p.tid} 
                                             onClick={() => setNonStriker(p)}
                                             disabled={striker?.tid === p.tid}
-                                            className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${nonStriker?.tid === p.tid ? 'border-slate-900 bg-slate-900 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-slate-200'} disabled:opacity-30`}
+                                            className={`px-5 py-3 rounded-2xl border transition-all font-black uppercase italic text-xs cursor-pointer font-display ${nonStriker?.tid === p.tid ? 'border-white bg-white text-black shadow-xl' : 'border-white/5 bg-white/[0.01] text-slate-400 hover:border-white/15'} disabled:opacity-20 disabled:cursor-not-allowed`}
                                         >
                                             {p.name}
                                         </button>
@@ -162,26 +163,26 @@ const SetupPlayers = () => {
                     </div>
 
                     {/* BOWLING SQUAD SECTION */}
-                    <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-200 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-1.5 h-full bg-slate-400"></div>
+                    <div className="bg-white/[0.02] border border-white/10 p-8 rounded-[3rem] shadow-2xl relative overflow-hidden backdrop-blur-xl">
+                        <div className="absolute top-0 right-0 w-1.5 h-full bg-white/20"></div>
                         <div className="flex justify-between items-center mb-8">
                             <div>
-                                <h3 className="text-3xl font-black uppercase italic leading-none">{state.bowlingTeam.name}</h3>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Bowling First</p>
+                                <h3 className="text-3xl font-black uppercase italic leading-none font-display">{state.bowlingTeam.name}</h3>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 font-display">Bowling First</p>
                             </div>
-                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center">
+                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
                                 <svg className="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" /></svg>
                             </div>
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Select Opening Bowler</label>
-                            <div className="flex flex-wrap gap-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-4 font-display">Select Opening Bowler</label>
+                            <div className="flex flex-wrap gap-2 max-h-[300px] overflow-y-auto pr-1 no-scrollbar">
                                 {state.bowlingTeam.players.map(p => (
                                     <button 
                                         key={p.tid} 
                                         onClick={() => setBowler(p)}
-                                        className={`px-5 py-3 rounded-2xl border-2 transition-all font-black uppercase italic text-xs ${bowler?.tid === p.tid ? 'border-slate-900 bg-slate-900 text-white shadow-xl scale-105' : 'border-stone-100 bg-stone-50 text-slate-400 hover:border-slate-200'}`}
+                                        className={`px-5 py-3 rounded-2xl border transition-all font-black uppercase italic text-xs cursor-pointer font-display ${bowler?.tid === p.tid ? 'border-white bg-white text-black shadow-xl' : 'border-white/5 bg-white/[0.01] text-slate-400 hover:border-white/15'}`}
                                     >
                                         {p.name}
                                     </button>
@@ -196,13 +197,13 @@ const SetupPlayers = () => {
                     <button 
                         onClick={handleStartMatch} 
                         disabled={!striker || !nonStriker || !bowler || loading}
-                        className="px-20 py-8 bg-red-600 text-white rounded-[2.5rem] font-black uppercase tracking-[0.3em] italic shadow-2xl shadow-red-600/30 hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-30 disabled:grayscale relative overflow-hidden"
+                        className="px-16 py-6 bg-red-500 text-white rounded-[2.5rem] font-black uppercase tracking-[0.3em] italic shadow-2xl hover:bg-red-600 transition-all active:scale-[0.98] disabled:opacity-30 disabled:grayscale relative overflow-hidden cursor-pointer font-display"
                     >
                         {loading ? "Initializing..." : "Start The Battle 🚀"}
                         <motion.div 
                             animate={{ x: ['-100%', '200%'] }}
-                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12"
                         />
                     </button>
                 </div>

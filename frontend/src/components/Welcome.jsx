@@ -10,92 +10,103 @@ const Welcome = ({ onEnter }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] bg-black overflow-hidden flex items-center justify-center font-sans">
+        <div className="fixed inset-0 z-[1000] bg-[#05070a] overflow-hidden flex items-center justify-center font-sans selection:bg-red-500/25">
             {/* VIDEO BACKGROUND */}
             <video
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-cover z-0 opacity-40 pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover z-0 opacity-30 pointer-events-none"
             >
                 <source src="/background.mp4" type="video/mp4" />
             </video>
 
-            {/* DARK GRADIENT OVERLAY */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black z-0 pointer-events-none"></div>
+            {/* RADIAL DARK GRADIENT OVERLAY */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#05070a] via-transparent to-[#05070a] z-0 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-black/50 z-0 pointer-events-none"></div>
 
             {/* 3D PERSPECTIVE PITCH */}
-            <div className="absolute inset-0 opacity-[0.05] z-0" style={{ 
-                backgroundImage: 'linear-gradient(to right, #991b1b 1px, transparent 1px), linear-gradient(to bottom, #991b1b 1px, transparent 1px)',
-                backgroundSize: '60px 60px',
-                transform: 'perspective(600px) rotateX(60deg) translateY(-100px)',
+            <div className="absolute inset-0 opacity-[0.08] z-0" style={{ 
+                backgroundImage: 'linear-gradient(to right, #ef4444 1px, transparent 1px), linear-gradient(to bottom, #ef4444 1px, transparent 1px)',
+                backgroundSize: '80px 80px',
+                transform: 'perspective(500px) rotateX(60deg) translateY(-80px)',
                 maskImage: 'linear-gradient(to bottom, transparent, black)'
             }}></div>
 
             {/* FLOATING STUMPS BACKGROUND */}
-            <div className="absolute top-1/4 right-10 opacity-[0.03] rotate-12 scale-150 z-0">
-                <svg width="100" height="200" viewBox="0 0 100 200" fill="#991b1b"><rect x="20" y="20" width="8" height="160" /><rect x="46" y="20" width="8" height="160" /><rect x="72" y="20" width="8" height="160" /><rect x="15" y="10" width="70" height="5" /></svg>
+            <div className="absolute top-1/4 right-12 opacity-[0.04] rotate-12 scale-150 z-0 pointer-events-none">
+                <svg width="100" height="200" viewBox="0 0 100 200" fill="#ef4444">
+                    <rect x="20" y="20" width="8" height="160" rx="3" />
+                    <rect x="46" y="20" width="8" height="160" rx="3" />
+                    <rect x="72" y="20" width="8" height="160" rx="3" />
+                    <rect x="15" y="10" width="70" height="6" rx="2" />
+                </svg>
             </div>
 
             <AnimatePresence>
                 {!isExiting && (
                     <motion.div 
-                        initial={{ opacity: 0, scale: 0.5, rotateX: 45 }}
-                        animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-                        exit={{ opacity: 0, scale: 3, filter: 'blur(20px)', transition: { duration: 0.8 } }}
-                        className="relative z-10 flex flex-col items-center"
-                        style={{ perspective: '1000px' }}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)', transition: { duration: 0.8, ease: "easeInOut" } }}
+                        className="relative z-10 flex flex-col items-center max-w-lg w-full px-6"
                     >
-                        {/* 3D FLOATING LOGO */}
-                        <motion.div
-                            animate={{ 
-                                rotateY: [0, 10, -10, 0],
-                                rotateX: [0, 5, -5, 0],
-                                y: [0, -15, 0]
-                            }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                            className="mb-12 relative group"
-                        >
-                            <h1 className="text-8xl md:text-9xl font-black italic text-white tracking-tighter flex flex-col items-center leading-none drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]">
-                                <span className="relative">
-                                    TURF
-                                    <span className="absolute -inset-2 bg-red-600/10 blur-2xl opacity-50 group-hover:opacity-100 transition-opacity"></span>
-                                </span>
-                                <span className="text-red-600 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">PRO</span>
-                            </h1>
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-48 h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
-                        </motion.div>
+                        {/* GLASS CONTAINER */}
+                        <div className="w-full bg-white/[0.02] border border-white/10 backdrop-blur-xl p-10 md:p-14 rounded-[3.5rem] shadow-2xl flex flex-col items-center glow-red">
+                            
+                            {/* FLOATING LOGO */}
+                            <motion.div
+                                animate={{ 
+                                    rotateY: [0, 5, -5, 0],
+                                    rotateX: [0, 3, -3, 0],
+                                    y: [0, -10, 0]
+                                }}
+                                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                                className="mb-8 relative group"
+                                style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+                            >
+                                <h1 className="text-7xl md:text-8xl font-black italic tracking-tighter flex flex-col items-center leading-none font-display text-white">
+                                    <span className="relative drop-shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                                        TURF
+                                        <span className="absolute -inset-4 bg-red-500/10 blur-3xl opacity-60 group-hover:opacity-100 transition-opacity"></span>
+                                    </span>
+                                    <span className="text-red-500 drop-shadow-[0_0_25px_rgba(239,68,68,0.4)]">PRO</span>
+                                </h1>
+                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent"></div>
+                            </motion.div>
 
-                        <motion.p 
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="text-yellow-500/90 font-black uppercase tracking-[0.6em] text-[10px] mb-12 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-                        >
-                            The Master Class • 2025
-                        </motion.p>
+                            <motion.p 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="text-amber-400 font-bold uppercase tracking-[0.5em] text-[10px] mb-12 text-center"
+                            >
+                                The Master Class Arena
+                            </motion.p>
 
-                        {/* 3D INTERACTIVE BUTTON */}
-                        <motion.button
-                            whileHover={{ scale: 1.05, rotateX: -5, boxShadow: "0 20px 40px rgba(234,179,8,0.3)" }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={handleEnter}
-                            className="px-12 py-6 bg-yellow-500 text-black font-black rounded-[2rem] uppercase tracking-[0.3em] italic shadow-2xl relative overflow-hidden group border border-yellow-400/20 transition-colors"
-                        >
-                            <span className="relative z-10 group-hover:text-white transition-colors duration-300">Step Into The Arena</span>
-                            <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        </motion.button>
-                        
-                        <div className="mt-20 flex gap-4 opacity-40">
-                            {[1, 2, 3].map(i => (
-                                <motion.div 
-                                    key={i}
-                                    animate={{ height: [10, 30, 10] }}
-                                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                                    className="w-1 bg-yellow-500 rounded-full"
-                                />
-                            ))}
+                            {/* INTERACTIVE BUTTON */}
+                            <motion.button
+                                whileHover={{ scale: 1.03, boxShadow: "0 15px 35px rgba(245,158,11,0.2)" }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={handleEnter}
+                                className="w-full py-5 bg-amber-400 text-black font-black rounded-3xl uppercase tracking-[0.25em] text-xs shadow-xl relative overflow-hidden group border border-amber-300/30 transition-all duration-300 cursor-pointer"
+                            >
+                                <span className="relative z-10 group-hover:text-white transition-colors duration-300 font-display">Step Into The Arena</span>
+                                <div className="absolute inset-0 bg-red-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                            </motion.button>
+                            
+                            {/* Animated Audio/Visualizer Waves */}
+                            <div className="mt-12 flex gap-1.5 opacity-60 h-8 items-end">
+                                {[1, 2, 3, 4, 5].map(i => (
+                                    <motion.div 
+                                        key={i}
+                                        animate={{ height: [8, 28, 8] }}
+                                        transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+                                        className="w-1 bg-amber-400 rounded-full"
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </motion.div>
                 )}
@@ -107,7 +118,7 @@ const Welcome = ({ onEnter }) => {
                     <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="fixed inset-0 z-[2000] bg-white"
+                        className="fixed inset-0 z-[2000] bg-black"
                         transition={{ duration: 0.2 }}
                     />
                 )}

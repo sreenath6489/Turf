@@ -2,75 +2,271 @@
 @config "../tailwind.config.js";
 
 body {
-  @apply bg-[#0B0E14] text-white font-sans;
+  @apply bg-[#080B10] text-white font-sans;
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Dark theme overrides for MatchDashboard */
-.theme-dark {
-  background-color: #0B0E14 !important;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Typography & Layout Utility Classes */
+.font-display {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-panel-hover:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+}
+
+.glow-green {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
+}
+
+.glow-red {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.15);
+}
+
+.glow-amber {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.15);
+}
+
+/* Hide standard scrollbars for modern sliders */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Dark & Themed overrides for MatchDashboard components */
+.theme-classic,
+.theme-dark,
+.theme-csk,
+.theme-rcb,
+.theme-mi {
+  background-color: #080B10 !important;
   color: #f8fafc !important;
 }
 
-.theme-dark .bg-white {
-  background-color: rgba(17, 24, 39, 0.8) !important; /* bg-slate-900/80 */
-  color: #f8fafc !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+/* Glassmorphic card styling overrides */
+.theme-classic .bg-white,
+.theme-dark .bg-white,
+.theme-csk .bg-white,
+.theme-rcb .bg-white,
+.theme-mi .bg-white {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* Standard text color overrides */
+.theme-classic .text-slate-900,
+.theme-classic .text-slate-700,
 .theme-dark .text-slate-900,
-.theme-dark .text-slate-700 {
+.theme-dark .text-slate-700,
+.theme-csk .text-slate-900,
+.theme-csk .text-slate-700,
+.theme-rcb .text-slate-900,
+.theme-rcb .text-slate-700,
+.theme-mi .text-slate-900,
+.theme-mi .text-slate-700 {
   color: #cbd5e1 !important;
 }
 
+.theme-classic .text-slate-500,
+.theme-classic .text-slate-400,
 .theme-dark .text-slate-500,
-.theme-dark .text-slate-400 {
-  color: #94a3b8 !important;
+.theme-dark .text-slate-400,
+.theme-csk .text-slate-500,
+.theme-csk .text-slate-400,
+.theme-rcb .text-slate-500,
+.theme-rcb .text-slate-400,
+.theme-mi .text-slate-500,
+.theme-mi .text-slate-400 {
+  color: #64748b !important;
 }
 
+/* Border overrides */
+.theme-classic .border-slate-100,
+.theme-classic .border-red-900\/10,
 .theme-dark .border-slate-100,
-.theme-dark .border-red-900\/10 {
+.theme-dark .border-red-900\/10,
+.theme-csk .border-slate-100,
+.theme-csk .border-red-900\/10,
+.theme-rcb .border-slate-100,
+.theme-rcb .border-red-900\/10,
+.theme-mi .border-slate-100,
+.theme-mi .border-red-900\/10 {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.theme-dark .bg-slate-50 {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+/* Table overrides */
+.theme-classic table, .theme-dark table, .theme-csk table, .theme-rcb table, .theme-mi table {
+  color: #f8fafc !important;
+}
+.theme-classic th, .theme-dark th, .theme-csk th, .theme-rcb th, .theme-mi th {
+  color: #64748b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.theme-classic td, .theme-dark td, .theme-csk td, .theme-rcb td, .theme-mi td {
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Button & Card Backgrounds */
+.theme-classic .bg-slate-50,
+.theme-dark .bg-slate-50,
+.theme-csk .bg-slate-50,
+.theme-rcb .bg-slate-50,
+.theme-mi .bg-slate-50 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
   color: #cbd5e1 !important;
 }
 
-.theme-dark .hover\:bg-slate-50:hover {
+.theme-classic .hover\:bg-slate-50:hover,
+.theme-dark .hover\:bg-slate-50:hover,
+.theme-csk .hover\:bg-slate-50:hover,
+.theme-rcb .hover\:bg-slate-50:hover,
+.theme-mi .hover\:bg-slate-50:hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-.theme-dark .bg-stone-50 {
-  background-color: rgba(255, 255, 255, 0.03) !important;
+.theme-classic .bg-stone-50,
+.theme-dark .bg-stone-50,
+.theme-csk .bg-stone-50,
+.theme-rcb .bg-stone-50,
+.theme-mi .bg-stone-50 {
+  background-color: rgba(255, 255, 255, 0.02) !important;
   color: #cbd5e1 !important;
 }
 
-.theme-dark .bg-stone-100 {
+.theme-classic .bg-stone-100,
+.theme-dark .bg-stone-100,
+.theme-csk .bg-stone-100,
+.theme-rcb .bg-stone-100,
+.theme-mi .bg-stone-100 {
   background-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
 
+/* Red accents (boundary, wickets) per theme */
+.theme-classic .text-red-600,
+.theme-dark .text-red-600 {
+  color: #f87171 !important;
+}
+.theme-classic .bg-red-50,
 .theme-dark .bg-red-50 {
-  background-color: rgba(239, 68, 68, 0.15) !important; /* bg-red-500/15 */
+  background-color: rgba(239, 68, 68, 0.15) !important;
   color: #fca5a5 !important;
 }
-
+.theme-classic .hover\:bg-red-50:hover,
 .theme-dark .hover\:bg-red-50:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(239, 68, 68, 0.25) !important;
 }
 
+/* CSK (Whistle Podu) Theme Accents - Gold */
+.theme-csk .text-red-600 {
+  color: #facc15 !important;
+}
+.theme-csk .bg-red-50 {
+  background-color: rgba(250, 204, 21, 0.15) !important;
+  color: #fef08a !important;
+}
+.theme-csk .hover\:bg-red-50:hover {
+  background-color: rgba(250, 204, 21, 0.25) !important;
+}
+.theme-csk .bg-red-600 {
+  background-color: #facc15 !important;
+  color: #080b10 !important;
+}
+.theme-csk .bg-red-600:hover {
+  background-color: #eab308 !important;
+}
+
+/* RCB (Play Bold) Theme Accents - Gold/Red */
+.theme-rcb .text-red-600 {
+  color: #f87171 !important;
+}
+.theme-rcb .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #fca5a5 !important;
+}
+.theme-rcb .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+/* MI (Duniya Hila) Theme Accents - Blue */
+.theme-mi .text-red-600 {
+  color: #60a5fa !important;
+}
+.theme-mi .bg-red-50 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #bfdbfe !important;
+}
+.theme-mi .hover\:bg-red-50:hover {
+  background-color: rgba(59, 130, 246, 0.25) !important;
+}
+.theme-mi .bg-red-600 {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+.theme-mi .bg-red-600:hover {
+  background-color: #2563eb !important;
+}
+
+/* Selection modal elements style */
+.theme-classic select,
 .theme-dark select,
-.theme-dark option {
-  background-color: #1f2937 !important;
+.theme-csk select,
+.theme-rcb select,
+.theme-mi select,
+.theme-classic option,
+.theme-dark option,
+.theme-csk option,
+.theme-rcb option,
+.theme-mi option {
+  background-color: #111827 !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-.theme-dark .shadow-red-900\/5 {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
-}
-
-.theme-dark .text-red-600 {
-  color: #f87171 !important; /* lighter red for visibility in dark mode */
+.theme-classic .shadow-red-900\/5,
+.theme-dark .shadow-red-900\/5,
+.theme-csk .shadow-red-900\/5,
+.theme-rcb .shadow-red-900\/5,
+.theme-mi .shadow-red-900\/5 {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8) !important;
 }
