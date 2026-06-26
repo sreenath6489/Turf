@@ -5,7 +5,7 @@ const CreateMatch = () => {
     const [savedTeams, setSavedTeams] = useState([]);
     const [teamA, setTeamA] = useState({ name: '', players: [], captain: null, id: null });
     const [teamB, setTeamB] = useState({ name: '', players: [], captain: null, id: null });
-    const [step, setStep] = useState(1); // 1: Setup, 2: Select Captains
+
 
     const navigate = useNavigate();
 
@@ -122,73 +122,17 @@ const CreateMatch = () => {
                 ) : null}
 
                 {/* NEXT STEP CTA */}
-                {step === 1 && teamA.id && teamB.id && teamA.players.length > 0 && teamB.players.length > 0 && (
+                {teamA.id && teamB.id && teamA.players.length > 0 && teamB.players.length > 0 && (
                     <div className="flex justify-center pb-20">
                         <button 
-                            onClick={() => setStep(2)}
-                            className="px-14 py-5 bg-red-50 text-white rounded-3xl font-black uppercase tracking-[0.2em] italic shadow-2xl hover:bg-red-600 active:scale-95 transition-all animate-in slide-in-from-bottom duration-500 font-display cursor-pointer"
+                            onClick={() => navigate('/toss', { state: { teamA, teamB } })}
+                            className="px-14 py-5 bg-red-500 text-white rounded-3xl font-black uppercase tracking-[0.2em] italic shadow-2xl hover:bg-red-600 active:scale-95 transition-all animate-in slide-in-from-bottom duration-500 font-display cursor-pointer"
                         >
-                            Select Team Captains ➔
+                            Proceed to Toss 🪙
                         </button>
                     </div>
                 )}
             </div>
-
-            {/* CAPTAIN SELECTION VIEW (STEP 2) */}
-            {step === 2 && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6">
-                    <div className="w-full max-w-4xl space-y-10 animate-in zoom-in-95 duration-500">
-                        <div className="text-center">
-                            <h3 className="text-5xl font-black italic text-white uppercase tracking-tighter leading-none font-display">Choose Your<br /><span className="text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.3)]">Leaders</span></h3>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-3">Finalize Match Command</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white/[0.02] border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl">
-                                <h4 className="text-[10px] font-black text-red-400 uppercase tracking-[0.3em] mb-6 text-center underline decoration-red-500/20 underline-offset-8 decoration-4 font-display">{teamA.name} Captain</h4>
-                                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1 no-scrollbar">
-                                    {teamA.players.map(p => (
-                                        <button 
-                                            key={p.tid} 
-                                            onClick={() => setTeamA({...teamA, captain: p})}
-                                            className={`p-4.5 rounded-2xl border-2 transition-all font-black uppercase italic text-[11px] cursor-pointer font-display ${teamA.captain?.tid === p.tid ? 'border-red-500 bg-red-500/10 text-red-400 shadow-xl' : 'border-white/5 text-slate-400 bg-white/[0.01] hover:border-white/20'}`}
-                                        >
-                                            {p.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="bg-white/[0.02] border border-white/10 p-8 rounded-[3rem] shadow-2xl backdrop-blur-xl">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 text-center underline decoration-white/10 underline-offset-8 decoration-4 font-display">{teamB.name} Captain</h4>
-                                <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto pr-1 no-scrollbar">
-                                    {teamB.players.map(p => (
-                                        <button 
-                                            key={p.tid} 
-                                            onClick={() => setTeamB({...teamB, captain: p})}
-                                            className={`p-4.5 rounded-2xl border-2 transition-all font-black uppercase italic text-[11px] cursor-pointer font-display ${teamB.captain?.tid === p.tid ? 'border-white bg-white text-black shadow-xl' : 'border-white/5 text-slate-400 bg-white/[0.01] hover:border-white/20'}`}
-                                        >
-                                            {p.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 justify-center">
-                            <button onClick={() => setStep(1)} className="px-8 py-4 bg-white/10 hover:bg-white/20 text-slate-300 font-black rounded-2xl uppercase tracking-widest text-[10px] transition-all cursor-pointer font-display">Back to Squads</button>
-                            {teamA.captain && teamB.captain && (
-                                <button
-                                    onClick={() => navigate('/squads', { state: { teamA, teamB } })}
-                                    className="px-10 py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-2xl shadow-red-500/20 hover:scale-[1.02] transition-all active:scale-95 cursor-pointer font-display"
-                                >
-                                    Generate Posters 📸
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

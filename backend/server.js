@@ -39,24 +39,28 @@ io.on('connection', (socket) => {
             // Update DB in the background
             await Match.findByIdAndUpdate(matchId, updatedScorecard);
             
-            // Trigger AI Commentary for big moments
-            if (newBall && (newBall.type === 'boundary' || newBall.type === 'wicket' || (updatedScorecard.balls > 0 && updatedScorecard.balls % 6 === 0))) {
-                const commentary = await generateCommentary(newBall, updatedScorecard);
-                console.log("[AI ENGINE] Generated commentary:", commentary);
-                if (commentary) {
-                    console.log("[AI ENGINE] Emitting to room:", matchId);
-                    io.to(matchId).emit('newCommentary', { 
-                        text: commentary, 
-                        isBigEvent: true 
-                    });
-                }
-            }
-
-            // Broadcast ONLY to people in this match room
+            // Broadcast score update and live event IMMEDIATELY
             io.to(matchId).emit('scoreUpdated', updatedScorecard);
-            
             if (newBall) {
                 io.to(matchId).emit('liveEvent', newBall);
+            }
+            
+            // Trigger AI Commentary asynchronously in the background for big moments
+            if (newBall && (newBall.type === 'boundary' || newBall.type === 'wicket' || (updatedScorecard.balls > 0 && updatedScorecard.balls % 6 === 0))) {
+                generateCommentary(newBall, updatedScorecard)
+                    .then(commentary => {
+                        console.log("[AI ENGINE] Generated commentary:", commentary);
+                        if (commentary) {
+                            console.log("[AI ENGINE] Emitting to room:", matchId);
+                            io.to(matchId).emit('newCommentary', { 
+                                text: commentary, 
+                                isBigEvent: true 
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        console.error("[AI ENGINE] Error generating commentary:", err);
+                    });
             }
         } catch (err) {
             console.error("Error updating score:", err);

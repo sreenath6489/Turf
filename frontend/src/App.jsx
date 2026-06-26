@@ -8,7 +8,6 @@ import MatchDashboard from './components/MatchDashboard.jsx';
 import SetupPlayers from './components/SetupPlayers';
 import PlayerStats from './components/PlayerStats';
 import AllPlayerStats from './components/AllPlayerStats';
-import SquadsPoster from './components/SquadsPoster';
 import Welcome from './components/Welcome';
 import Teams from './components/Teams';
 
@@ -57,7 +56,6 @@ export default function App() {
           <Route path="/scoreboard" element={<ProtectedRoute><MatchDashboard /></ProtectedRoute>} />
           <Route path="/player-stats/:tid" element={<ProtectedRoute><PlayerStats /></ProtectedRoute>} />
           <Route path="/all-stats" element={<ProtectedRoute><AllPlayerStats /></ProtectedRoute>} />
-          <Route path="/squads" element={<ProtectedRoute><SquadsPoster /></ProtectedRoute>} />
           <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
 
           {/* Fallback */}

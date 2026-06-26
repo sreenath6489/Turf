@@ -5,8 +5,45 @@ import { io } from 'socket.io-client';
 
 const socket = io(import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`);
 
+const LiveSkeleton = () => (
+    <div className="bg-white/[0.02] border border-white/5 shadow-lg p-6 rounded-[2.5rem] animate-pulse flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-start gap-4 w-full">
+            <div className="flex-1 space-y-3">
+                <div className="flex gap-2">
+                    <div className="h-3 w-20 bg-white/10 rounded-full"></div>
+                    <div className="h-3 w-16 bg-white/10 rounded-full"></div>
+                </div>
+                <div className="h-6 w-48 bg-white/10 rounded-xl"></div>
+                <div className="h-4 w-32 bg-white/10 rounded-xl"></div>
+            </div>
+        </div>
+        <div className="flex items-center gap-6 border-t md:border-t-0 border-white/5 pt-4 md:pt-0 w-full md:w-auto justify-between md:justify-end">
+            <div className="space-y-2">
+                <div className="h-8 w-24 bg-white/10 rounded-xl"></div>
+                <div className="h-3 w-16 bg-white/10 rounded-full float-right"></div>
+            </div>
+            <div className="h-7 w-12 bg-white/10 rounded-full"></div>
+        </div>
+    </div>
+);
+
+const HistorySkeleton = () => (
+    <div className="bg-white/[0.01] border border-white/5 shadow-md p-6 rounded-[2rem] animate-pulse flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-3">
+            <div className="h-4 w-40 bg-white/10 rounded-lg"></div>
+            <div className="h-3 w-20 bg-white/5 rounded-full"></div>
+            <div className="h-3 w-24 bg-white/10 rounded-full"></div>
+        </div>
+        <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
+            <div className="h-6 w-16 bg-white/10 rounded-lg"></div>
+            <div className="h-6 w-20 bg-white/10 rounded-full"></div>
+        </div>
+    </div>
+);
+
 const Home = () => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [liveMatches, setLiveMatches] = useState([]);
     const [history, setHistory] = useState([]);
     const [commentaryMode, setCommentaryMode] = useState(localStorage.getItem('commentaryMode') || 'AI');
@@ -22,28 +59,25 @@ const Home = () => {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
 
-        const fetchLiveMatches = async () => {
+        const loadAllData = async () => {
+            setLoading(true);
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/live`);
-                const sorted = res.data.sort((a, b) => b._id.localeCompare(a._id));
-                setLiveMatches(sorted);
+                const [liveRes, historyRes] = await Promise.all([
+                    axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/live`),
+                    axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/history/${parsedUser.tid}`)
+                ]);
+                const sortedLive = liveRes.data.sort((a, b) => b._id.localeCompare(a._id));
+                const sortedHistory = historyRes.data.sort((a, b) => b._id.localeCompare(a._id));
+                setLiveMatches(sortedLive);
+                setHistory(sortedHistory);
             } catch (err) {
-                console.error("Error fetching live matches", err);
+                console.error("Error loading matches/history", err);
+            } finally {
+                setLoading(false);
             }
         };
 
-        const fetchHistory = async () => {
-            try {
-                const res = await axios.get(`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}/api/matches/history/${parsedUser.tid}`);
-                const sorted = res.data.sort((a, b) => b._id.localeCompare(a._id));
-                setHistory(sorted);
-            } catch (err) {
-                console.error("Error fetching match history", err);
-            }
-        };
-
-        fetchLiveMatches();
-        fetchHistory();
+        loadAllData();
 
         socket.on('scoreUpdated', (updatedMatch) => {
             setLiveMatches(prev => {
@@ -223,7 +257,12 @@ const Home = () => {
                     </div>
 
                     <div className="space-y-4">
-                        {liveMatches.length > 0 ? (
+                        {loading ? (
+                            <>
+                                <LiveSkeleton />
+                                <LiveSkeleton />
+                            </>
+                        ) : liveMatches.length > 0 ? (
                             liveMatches.map((match) => (
                                 <div
                                     key={match._id}
@@ -276,7 +315,12 @@ const Home = () => {
                     </div>
 
                     <div className="space-y-4">
-                        {history.length > 0 ? (
+                        {loading ? (
+                            <>
+                                <HistorySkeleton />
+                                <HistorySkeleton />
+                            </>
+                        ) : history.length > 0 ? (
                             history.map((match) => (
                                 <div
                                     key={match._id}

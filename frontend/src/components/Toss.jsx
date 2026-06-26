@@ -208,7 +208,7 @@ const Toss = () => {
                                         onClick={startMatch} 
                                         className="w-full py-5 bg-red-500 text-white font-black rounded-2xl shadow-xl uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all font-display cursor-pointer"
                                     >
-                                        Proceed to Squads ➔
+                                        Setup Pitch & Players ➔
                                     </button>
                                 )}
                             </div>
